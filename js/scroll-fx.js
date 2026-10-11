@@ -48,8 +48,8 @@
 
   function tickHero(p, sx, sy) {
     /* ilk %12: kapak görseli katmanlı yakınlaşır, sonra okyanus sahnesine geçer */
-    var q = clamp(p / 0.12, 0, 1), e = smooth(0, 1, q);
-    var cover = 1 - smooth(.07, .125, p);
+    var q = clamp(p / 0.144, 0, 1), e = smooth(0, 1, q);
+    var cover = 1 - smooth(.084, .15, p);
     coverEl.style.display = cover > .002 ? "block" : "none";
     if (cover > .002) {
       coverEl.style.opacity = cover.toFixed(3);
@@ -57,15 +57,15 @@
       sky.style.transform   = "translate3d(" + (mxs * .3) + "px," + (mys * .3 - e * 40) + "px,0) scale(" + (1 + e * .22) + ")";
       land.style.transform  = "translate3d(" + (mxs * .8) + "px," + (mys * .8 - e * 10) + "px,0) scale(" + (1 + e * .6) + ")";
       rocks.style.transform = "translate3d(" + (mxs * 1.6) + "px," + (mys * 1.6 + e * 60) + "px,0) scale(" + (1 + e * 1.7) + ")";
-      rocks.style.opacity = (1 - smooth(.04, .09, p)).toFixed(3);
-      var rise = smooth(0, .09, p);
+      rocks.style.opacity = (1 - smooth(.048, .108, p)).toFixed(3);
+      var rise = smooth(0, .108, p);
       sun.style.opacity = (rise * .9).toFixed(3);
       sun.style.transform = "translate3d(0," + (-rise * 10 + "vh") + ",0) scale(" + (.5 + rise * 1.1) + ")";
       dark.style.opacity = "0";
-      var dr = smooth(0, .09, p);
+      var dr = smooth(0, .108, p);
       orbit.forEach(function (o, i) { o.style.strokeDashoffset = (1400 * (1 - clamp(dr * (1.4 - i * .1), 0, 1))).toFixed(1); });
     }
-    var out = 1 - smooth(0.01, .05, p);
+    var out = 1 - smooth(0.012, .06, p);
     body.style.opacity = out.toFixed(3);
     body.style.transform = "translate3d(0," + ((1 - out) * 60) + "px,0)";
     if (window.HeroScenes) window.HeroScenes.update(p, performance.now() / 1000);
@@ -85,7 +85,7 @@
     if (glow) glow.style.transform = "translate3d(0," + (-cur * .06) + "px,0)";
 
     if (hero && cur < hero.offsetHeight + vh) {
-      var total = hero.offsetHeight - vh;
+      var total = hero.offsetHeight - (pin ? pin.clientHeight : vh);
       tickHero(clamp(cur / total, 0, 1), smx, smy);
     }
 

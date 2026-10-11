@@ -63,7 +63,6 @@
   function caption(parent, kicker, title, text, cls, icon) {
     return H("cap " + (cls || ""), "<small>" + kicker + "</small><h2>" + (icon ? '<i class="h-ic">' + icon + "</i>" : "") + title + "</h2>" + (text ? "<p>" + text + "</p>" : ""), parent);
   }
-  var flash = H("hs-flash", "", hs);
   var hud = H("hs-hud", "<b></b><span></span>", pin);
   var rail = H("rail2", "", pin);
 
@@ -107,7 +106,7 @@
   }
   function placeTour(T) {
     var key = VW + "x" + VH; if (T.key === key) return; T.key = key;
-    var s = VW * 1.8 / IMGW; T.s = s;
+    var s = Math.max(VW * 1.8 / IMGW, VH * .42 / 286); T.s = s;
     T.left = VW / 2 - SUN[0] * s; T.top = VH * .6 - SUN[1] * s;
     for (var n in T.L) {
       var d = T.L[n];
@@ -134,23 +133,25 @@
     });
   }
   function makeDolphins(parent, n) {
-    var list = [];
+    var list = [], dd = S("defs", {}, parent);
+    grad(dd, "dolG", [[0, "#9ff7ff"], [.45, "#3b9cf6"], [1, "#7c5cf0"]]);
+    parent.style.filter = "drop-shadow(0 0 9px rgba(45,212,191,.55))";
     for (var i = 0; i < n; i++) {
-      var g = S("g", {}, parent), wake = S("path", { fill: "none", stroke: "#ffe0b8", "stroke-width": 2.4, "stroke-linecap": "round" }, g);
-      var rA = S("ellipse", { fill: "none", stroke: "#ffe3c0", "stroke-width": 3 }, g), rB = S("ellipse", { fill: "none", stroke: "#ffe3c0", "stroke-width": 3 }, g);
-      var drops = []; for (var d = 0; d < 10; d++) drops.push(S("circle", { r: 3.6, fill: "#ffeccf" }, g));
-      var dg = S("g", {}, g), bd = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2.2, "stroke-linejoin": "round" }, dg);
-      var fn = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, "stroke-linejoin": "round" }, dg);
-      var fl = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, "stroke-linejoin": "round" }, dg);
-      var eye = S("circle", { cx: 82, cy: -3, r: 2.6, fill: "#ffd9a8" }, dg);
-      list.push({ i: i, P: 3.6 + i * .9, off: i * 1.7, g: g, dg: dg, bd: bd, fn: fn, fl: fl, wake: wake, rA: rA, rB: rB, drops: drops, fin: S("path", { d: DOLPHIN.fin, fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, transform: "scale(.5)", opacity: 0 }, g) });
+      var g = S("g", {}, parent), wake = S("path", { fill: "none", stroke: "#c9fff5", "stroke-width": 2.4, "stroke-linecap": "round" }, g);
+      var rA = S("ellipse", { fill: "none", stroke: "#bff7ee", "stroke-width": 3 }, g), rB = S("ellipse", { fill: "none", stroke: "#bff7ee", "stroke-width": 3 }, g);
+      var drops = []; for (var d = 0; d < 10; d++) drops.push(S("circle", { r: 3.6, fill: "#d9fff8" }, g));
+      var dg = S("g", {}, g), bd = S("path", { fill: "url(#dolG)", stroke: "#dffff9", "stroke-width": 2, "stroke-linejoin": "round" }, dg);
+      var fn = S("path", { fill: "url(#dolG)", stroke: "#dffff9", "stroke-width": 1.8, "stroke-linejoin": "round" }, dg);
+      var fl = S("path", { fill: "url(#dolG)", stroke: "#dffff9", "stroke-width": 1.8, "stroke-linejoin": "round" }, dg);
+      var eye = S("circle", { cx: 82, cy: -3, r: 2.8, fill: "#04163a" }, dg);
+      list.push({ i: i, P: 3.6 + i * .9, off: i * 1.7, g: g, dg: dg, bd: bd, fn: fn, fl: fl, wake: wake, rA: rA, rB: rB, drops: drops, fin: S("path", { d: DOLPHIN.fin, fill: "url(#dolG)", stroke: "#dffff9", "stroke-width": 1.8, transform: "scale(.5)", opacity: 0 }, g) });
     }
     return list;
   }
   function stepDolphins(list, time, hy, W) {
     list.forEach(function (D) {
       var x = time + D.off, c = Math.floor(x / D.P), u = (x - c * D.P) / D.P, r = rng(c * 977 + D.i * 131 + 7);
-      var dir = r() < .5 ? -1 : 1, x0 = 260 + r() * 1080, dx = dir * (320 + r() * 260), hgt = 110 + r() * 100, ys = hy + 85 + r() * 110;
+      var hw = VW / K / 2, dir = r() < .5 ? -1 : 1, x0 = 800 + (r() * 2 - 1) * hw * .72, dx = dir * (320 + r() * 260) * Math.min(1, hw / 640), hgt = 110 + r() * 100, ys = hy + 85 + r() * 110;
       var sz = .36 + (ys - hy - 60) / 420;
       var jump = u < .46, j = u / .46, tail = Math.sin(time * 7 + D.i);
       D.rA.setAttribute("opacity", 0); D.rB.setAttribute("opacity", 0);
@@ -188,10 +189,10 @@
   /* =========================================================
      1) GÖL / OKYANUS (kapaktaki sahne) + yunuslar
      ========================================================= */
-  var OCEAN = addScene("ocean", "UFUK", 0.09, 0.255, function (sc, el) {
+  var OCEAN = addScene("ocean", "UFUK", 0.108, 0.307, function (sc, el) {
     sc.T = buildTour(el);
     sc.waves = [];
-    for (var w = 0; w < 14; w++) sc.waves.push(S("path", { fill: "none", stroke: "#ffd6b0", "stroke-linecap": "round" }, sc.T.waveSvg));
+    for (var w = 0; w < (VW < 700 ? 9 : 14); w++) sc.waves.push(S("path", { fill: "none", stroke: "#bff0ff", "stroke-linecap": "round" }, sc.T.waveSvg));
     var sD = svg(el); sc.dol = makeDolphins(sD, 4);
     sc.rocks = H("tour-layer tl-rocks", "", el); setMask(sc.rocks, MASKS.rocks[0], true);
     sc.cap = caption(el, "UFUK", "Ufkun ötesine", "Her büyük fikir, ufuk çizgisinin ötesine bakmakla başlar.", "cap-bottom");
@@ -210,7 +211,7 @@
       var u = ((i / sc.waves.length) + cam) % 1; if (u < 0) u += 1;
       var y = hy + 44 + 300 * Math.pow(u, 2.1), amp = 2 + 22 * u * u, wl = 80 + 300 * u, ph = i * 1.9 + time * (.4 + u);
       var d = "M-60 " + y.toFixed(1);
-      for (var x = -60; x <= 1700; x += 40) d += " L" + x + " " + (y + amp * Math.sin(x / wl * 6.283 + ph)).toFixed(1);
+      for (var x = -60; x <= 1700; x += (VW < 700 ? 70 : 40)) d += " L" + x + " " + (y + amp * Math.sin(x / wl * 6.283 + ph)).toFixed(1);
       sc.waves[i].setAttribute("d", d); sc.waves[i].setAttribute("stroke-width", (.5 + 2.2 * u).toFixed(2)); sc.waves[i].setAttribute("opacity", (Math.min(1, u * 4) * .22).toFixed(2));
     }
     stepDolphins(sc.dol, time, hy, 1600);
@@ -231,7 +232,7 @@
     { n: "Vizyon", R: 300, r: 19, c: "#dba36a", a: .5, om: 1.2 }, { n: "Sabır", R: 392, r: 15, c: "#f1d9a2", a: 3.3, om: .95, ring: true },
     { n: "İnanç", R: 478, r: 10.5, c: "#8eeeff", a: 5.9, om: .7 }, { n: "Başarı", R: 556, r: 10, c: "#5f72ff", a: 1.9, om: .55 }
   ];
-  var SPACE = addScene("space", "EVREN", 0.24, 0.40, function (sc, el) {
+  var SPACE = addScene("space", "EVREN", 0.289, 0.481, function (sc, el) {
     sc.cv = document.createElement("canvas"); sc.cv.className = "hs-canvas"; el.appendChild(sc.cv); sc.ctx = sc.cv.getContext("2d");
     var r = rng(99); sc.stars = [];
     for (var i = 0; i < 280; i++) sc.stars.push({ x: r(), y: r(), z: .25 + r() * .75, p: r() * 6.28 });
@@ -289,13 +290,13 @@
     /* güneş sistemi */
     var sy = smooth(.26, .52, t);
     if (sy > .01) {
-      var zoom = lerp(3, 1, sy), sk = VW / 1600 * zoom, sxp = VW / 2, syp = VH * .44, tilt = -.1;
+      var zoom = lerp(3, 1, sy), sk = (VW < VH ? VW * .8 / 556 : Math.min(VW * .47 / 556, 1.25)) * zoom, sq = VW < VH ? .62 : .3, sxp = VW / 2, syp = VH * .44, tilt = -.1;
       ctx.save(); ctx.globalAlpha = sy; ctx.translate(sxp, syp); ctx.rotate(tilt);
       ctx.strokeStyle = "rgba(150,170,255,.16)"; ctx.lineWidth = 1;
-      PLANETS.forEach(function (p) { ctx.beginPath(); ctx.ellipse(0, 0, p.R * sk, p.R * sk * .3, 0, 0, 6.283); ctx.stroke(); });
+      PLANETS.forEach(function (p) { ctx.beginPath(); ctx.ellipse(0, 0, p.R * sk, p.R * sk * sq, 0, 0, 6.283); ctx.stroke(); });
       var pos = PLANETS.map(function (p) {
         var ang = p.a + (t * 16 + time * .1) * p.om * .2;
-        return { p: p, x: Math.cos(ang) * p.R * sk, y: Math.sin(ang) * p.R * sk * .3, back: Math.sin(ang) < 0 };
+        return { p: p, x: Math.cos(ang) * p.R * sk, y: Math.sin(ang) * p.R * sk * sq, back: Math.sin(ang) < 0 };
       });
       function planet(o) {
         var p = o.p, r = p.r * sk * 1.25, dl = Math.hypot(o.x, o.y) || 1, ux = -o.x / dl, uy = -o.y / dl;
@@ -325,7 +326,7 @@
   /* =========================================================
      3) DAĞLAR: kapaktaki zirvelerin arasından geçiş (bulutlardan iniş)
      ========================================================= */
-  var MOUNT = addScene("mountains", "ZİRVE", 0.385, 0.52, function (sc, el) {
+  var MOUNT = addScene("mountains", "ZİRVE", 0.463, 0.626, function (sc, el) {
     sc.T = buildTour(el);
     sc.rocks = H("tour-layer tl-rocks", "", el); setMask(sc.rocks, MASKS.rocks[0], true);
     var cs = svg(el, true), cd = S("defs", {}, cs); sc.cloudSvg = cs;
@@ -353,140 +354,8 @@
     sc.cap.style.opacity = (smooth(.18, .3, t) * (1 - smooth(.62, .8, t))).toFixed(3);
   };
 
-  /* =========================================================
-     4) ÇİFT BAŞLI ANADOLU KARTALI  (Selçuklu esinli, asil; kanatlar dirsek ve bilekten kırılıp açılır)
-     ========================================================= */
-  var SH = [-34, 126], WR = [-109, 43];
-  function leaf(bx, by, ang, len, w, bend) {
-    var dx = Math.cos(ang), dy = Math.sin(ang), nx = -dy, ny = dx, bd = (bend === undefined ? .05 : bend) * len;
-    var x1 = bx + dx * len * .35, y1 = by + dy * len * .35, x2 = bx + dx * len * .8, y2 = by + dy * len * .8, tx = bx + dx * len, ty = by + dy * len;
-    function f(v) { return v.toFixed(1); }
-    return "M" + f(bx + nx * w * .5) + " " + f(by + ny * w * .5) +
-      " C" + f(x1 + nx * w + nx * bd) + " " + f(y1 + ny * w + ny * bd) + " " + f(x2 + nx * w * .9 + nx * bd) + " " + f(y2 + ny * w * .9 + ny * bd) + " " + f(tx + nx * bd) + " " + f(ty + ny * bd) +
-      " C" + f(x2 - nx * w * .55 + nx * bd) + " " + f(y2 - ny * w * .55 + ny * bd) + " " + f(x1 - nx * w * .85 + nx * bd) + " " + f(y1 - ny * w * .85 + ny * bd) + " " + f(bx - nx * w * .5) + " " + f(by - ny * w * .5) + " Z";
-  }
-  function buildWing(g) {
-    var arm = S("g", {}, g), hand = S("g", {}, arm), wing = { arm: arm, hand: hand, prim: [], sec: [] };
-    var n = 10, L = [190, 212, 230, 244, 252, 254, 246, 230, 208, 184];
-    for (var i = 0; i < n; i++) {
-      var a = (-108 - i * (78 / (n - 1))) * Math.PI / 180, bx = WR[0] + Math.cos(a) * 10, by = WR[1] + Math.sin(a) * 10;
-      var fg = S("g", {}, hand);
-      S("path", { d: leaf(bx, by, a, L[i], 25 - i * .7), fill: "url(#eF)", stroke: "url(#eS)", "stroke-width": 2.6, "stroke-linejoin": "round" }, fg);
-      S("path", { d: "M" + bx.toFixed(1) + " " + by.toFixed(1) + " L" + (bx + Math.cos(a) * L[i] * .93).toFixed(1) + " " + (by + Math.sin(a) * L[i] * .93).toFixed(1), fill: "none", stroke: "#c9fff5", "stroke-opacity": .55, "stroke-width": 1.4 }, fg);
-      wing.prim.push(fg);
-    }
-    var m = 8, L2 = [96, 108, 116, 120, 118, 112, 102, 92];
-    var sec = S("g", {}, arm);
-    for (var k = 0; k < m; k++) {
-      var tt = (k + .5) / m, a2 = (-196 + k * (46 / (m - 1))) * Math.PI / 180;
-      var b2 = [lerp(SH[0], WR[0], tt), lerp(SH[1], WR[1], tt)], fg2 = S("g", {}, sec);
-      S("path", { d: leaf(b2[0], b2[1], a2, L2[k], 34, .03), fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 2.2, "stroke-linejoin": "round" }, fg2);
-      S("path", { d: leaf(b2[0], b2[1], a2, L2[k] * .55, 30, .03), fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 1.8, "stroke-linejoin": "round" }, fg2);
-      wing.sec.push(fg2);
-    }
-    S("path", { d: "M" + SH[0] + " " + SH[1] + " L" + WR[0] + " " + WR[1], fill: "none", stroke: "url(#eS)", "stroke-width": 27, "stroke-linecap": "round" }, arm);
-    S("path", { d: "M" + SH[0] + " " + SH[1] + " L" + WR[0] + " " + WR[1], fill: "none", stroke: "url(#eD)", "stroke-width": 22, "stroke-linecap": "round" }, arm);
-    S("circle", { cx: WR[0], cy: WR[1], r: 7, fill: "url(#eG)" }, arm);
-    return wing;
-  }
-  function buildHead(g) {
-    var neck = S("g", {}, g);
-    S("path", { d: "M-10 96 L-32 106 C-30 126 -26 144 -18 160 L2 160 L2 120 Z", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, neck);
-    var head = S("g", {}, neck);
-    S("path", { d: "M-46 28 L-40 6 L-34 26 M-38 30 L-30 10 L-26 32", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 2, "stroke-linejoin": "round" }, head);
-    S("path", { d: "M-8 96 C-18 82 -26 66 -30 54 C-32 44 -34 34 -42 28 C-50 22 -62 20 -72 24 C-76 26 -80 30 -84 34 C-96 36 -108 44 -110 58 C-110 66 -106 72 -100 72 C-100 64 -96 58 -88 56 L-76 54 C-70 58 -62 62 -58 68 C-50 78 -40 90 -30 104 Z", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, head);
-    S("path", { d: "M-84 34 C-96 36 -108 44 -110 58 C-110 66 -106 72 -100 72 C-100 64 -96 58 -88 56 L-76 54 Z", fill: "url(#eG)", stroke: "#fff3c4", "stroke-width": 1.5, "stroke-linejoin": "round" }, head);
-    S("path", { d: "M-78 28 L-54 38", stroke: "#02103a", "stroke-width": 4.2, "stroke-linecap": "round" }, head);
-    S("circle", { cx: -64, cy: 40, r: 4.2, fill: "#fff3c4" }, head);
-    S("circle", { cx: -65, cy: 40, r: 1.9, fill: "#02103a" }, head);
-    S("path", { d: "M-34 50 C-40 62 -42 76 -38 90 M-46 56 C-50 66 -50 78 -46 88 M-22 62 C-26 74 -26 86 -22 96", fill: "none", stroke: "#c9fff5", "stroke-opacity": .5, "stroke-width": 1.6 }, head);
-    return { neck: neck, head: head };
-  }
-  function buildLeg(g) {
-    var leg = S("g", { fill: "none", stroke: "url(#eG)", "stroke-width": 6, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
-    S("path", { d: "M-16 172 C-34 190 -46 208 -52 230" }, leg);
-    S("path", { d: "M-52 230 C-70 236 -84 246 -90 262 M-52 230 C-68 246 -76 262 -70 280 M-52 230 C-56 250 -52 268 -40 282 M-52 230 C-40 246 -26 258 -14 262" }, leg);
-    S("path", { d: "M-90 262 L-98 268 M-70 280 L-72 290 M-40 282 L-34 290 M-14 262 L-6 262", "stroke-width": 4 }, leg);
-    return leg;
-  }
-  var EAGLE = addScene("eagle", "ANADOLU", 0.505, 0.665, function (sc, el) {
-    sc.rays = H("rays", "", el);
-    var gs = svg(el), gd = S("defs", {}, gs);
-    rgrad(gd, "eGlow", [[0, "#5eead4", .7], [.45, "#3b82f6", .28], [1, "#8b5cf6", 0]]);
-    S("circle", { cx: 800, cy: 450, r: 520, fill: "url(#eGlow)" }, gs); sc.glowSvg = gs; gs.style.willChange = "transform";
-    var rs = svg(el); sc.ringSvg = rs; rs.style.willChange = "transform, opacity";
-    var rg = S("g", { fill: "none", stroke: "#5eead4", "stroke-opacity": .38, "stroke-width": 2 }, rs);
-    for (var i = 0; i < 3; i++) S("circle", { cx: 800, cy: 450, r: 300 + i * 120 }, rg);
-    var s = svg(el, true), defs = S("defs", {}, s); sc.eagleSvg = s; s.style.willChange = "transform, opacity";
-    grad(defs, "eF", [[0, "#0a1a52"], [.55, "#14449e"], [1, "#2dd4bf"]], 1, 1);
-    grad(defs, "eC", [[0, "#0b1f66"], [1, "#1a5ec8"]], 1, 1);
-    grad(defs, "eD", [[0, "#0a1750"], [1, "#0f3a96"]], 1, 1);
-    grad(defs, "eS", [[0, "#d9fff8"], [.5, "#7fe9ff"], [1, "#a5b4ff"]], 1, 1);
-    grad(defs, "eG", [[0, "#fff1b8"], [1, "#e0a93a"]], 1, 1);
-    grad(defs, "eB", [[0, "#0c2470"], [1, "#1c63d6"]], 0, 1);
-    sc.eagle = S("g", { transform: "translate(800,540) translate(0,-110)" }, s);
-    var L = S("g", {}, sc.eagle), R = S("g", { transform: "scale(-1,1)" }, sc.eagle);
-    sc.wingL = buildWing(L); sc.wingR = buildWing(R);
-    buildLeg(L); buildLeg(R);
-    sc.tail = S("g", {}, sc.eagle);
-    for (var k = -3; k <= 3; k++) {
-      var a = Math.PI / 2 + k * .17, len = 96 + (3 - Math.abs(k)) * 9;
-      S("path", { d: leaf(0, 200, a, len, 24, 0), fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 2.4, "stroke-linejoin": "round" }, sc.tail);
-    }
-    var body = S("g", {}, sc.eagle);
-    S("path", { d: "M-32 94 C-40 132 -28 172 -10 202 L0 222 L10 202 C28 172 40 132 32 94 C16 106 -16 106 -32 94 Z", fill: "url(#eB)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, body);
-    for (var q = 0; q < 4; q++) S("path", { d: "M" + (-20 + q * 2) + " " + (114 + q * 20) + " L0 " + (128 + q * 20) + " L" + (20 - q * 2) + " " + (114 + q * 20), fill: "none", stroke: "#9ff5e6", "stroke-opacity": .75, "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, body);
-    sc.hL = buildHead(L); sc.hR = buildHead(R);
-    var em = S("g", {}, sc.eagle);
-    S("path", { d: "M-19.96 -47.33 A24 24 0 1 0 19.96 -47.33 A20 20 0 1 1 -19.96 -47.33 Z", fill: "#5eead4", stroke: "#e6fffa", "stroke-width": 1.4 }, em);
-    var star = ""; for (var v = 0; v < 10; v++) { var rr = v % 2 ? 5.4 : 13, an = -Math.PI / 2 + v * Math.PI / 5; star += (v ? "L" : "M") + (Math.cos(an) * rr).toFixed(1) + " " + (-80 + Math.sin(an) * rr).toFixed(1); }
-    S("path", { d: star + "Z", fill: "#ffffff", stroke: "#bff7ee", "stroke-width": 1 }, em);
-    sc.cap = caption(el, "KÖKLERİMİZ ANADOLU'DA", "Asil bakış, yüksek hedef", "Türk tarihinin kadim sembolü kartal gibi: yüksekten bakar, hedefe kilitlenir.", "cap-bottom");
-  });
-  EAGLE.update = function (t, time) {
-    var sc = EAGLE, e = smooth(0, 1, t);
-    var scale = .12 + 2.2 * Math.pow(t, 2.25);
-    var env = Math.pow(1 - t, 1.15);
-    var xx = Math.sin(t * 5.4) * 300 * env;
-    var g = .5 + .5 * Math.sin(t * 6.4 + .6), amp = .22 + .78 * smooth(.25, .7, g), ph = t * 40;
-    var sn = Math.sin(ph), cs = Math.cos(ph);
-    var yy = 430 + (1 - e) * 130 - t * 36 + Math.sin(t * 8.5) * 16 * env - sn * 10 * amp;
-    var bank = Math.cos(t * 5.4) * 9 * env + Math.sin(ph - .6) * 2 * amp;
-    sc.eagleSvg.style.transformOrigin = px(800) + "px " + py(540) + "px";
-    sc.eagleSvg.style.transform = "translate3d(" + (xx * K).toFixed(1) + "px," + ((yy - 540) * K).toFixed(1) + "px,0) rotate(" + bank.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
-    /* kanat: omuz -> dirsek/bilek kırılması; yukarı vuruşta el katlanır, aşağı vuruşta açılır */
-    var alpha = lerp(-6, -28, amp) + 42 * amp * cs, beta = (sn > 0 ? 16 * sn : 54 * sn) * amp - 3 * (1 - amp);
-    [sc.wingL, sc.wingR].forEach(function (w, wi) {
-      var lag = wi ? .08 : 0;
-      w.arm.setAttribute("transform", "rotate(" + (alpha + 2 * Math.sin(time * 1.3 + wi)).toFixed(2) + " " + SH[0] + " " + SH[1] + ")");
-      w.hand.setAttribute("transform", "rotate(" + (beta + lag).toFixed(2) + " " + WR[0] + " " + WR[1] + ")");
-      w.prim.forEach(function (fg, i) {
-        var fl = (7 * amp * Math.sin(ph - i * .26 - .4) + 2 * Math.sin(time * 2 + i)) * (.3 + .7 * i / 9);
-        fg.setAttribute("transform", "rotate(" + fl.toFixed(2) + " " + WR[0] + " " + WR[1] + ")");
-      });
-      w.sec.forEach(function (fg, k) { fg.setAttribute("transform", "rotate(" + (4 * amp * Math.sin(ph - .8 - k * .2)).toFixed(2) + " " + (lerp(SH[0], WR[0], (k + .5) / 8)).toFixed(1) + " " + (lerp(SH[1], WR[1], (k + .5) / 8)).toFixed(1) + ")"); });
-    });
-    /* başlar ve boyunlar: bağımsız bakınma, kanatla uyumlu hafif salınım */
-    [[sc.hL, 1, 0], [sc.hR, 1, 2.1]].forEach(function (h, i) {
-      var neck = 7 * Math.sin(time * 1.05 + h[2]) + 4 * Math.sin(ph * .5 + h[2]) + 3 * sn * amp;
-      var nod = 6 * Math.sin(time * 1.6 + h[2] * 1.7) - 4 * cs * amp;
-      h[0].neck.setAttribute("transform", "translate(-6,-34) rotate(" + neck.toFixed(2) + " -10 150)");
-      h[0].head.setAttribute("transform", "rotate(" + nod.toFixed(2) + " -40 66)");
-    });
-    sc.tail.setAttribute("transform", "rotate(" + (3 * Math.sin(ph * .5)).toFixed(2) + " 0 200)");
-    sc.glowSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
-    sc.glowSvg.style.transform = "translate3d(" + (xx * K * .6) + "px,0,0) scale(" + (.75 + t * 1.0).toFixed(3) + ")";
-    sc.ringSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
-    sc.ringSvg.style.transform = "scale(" + (.5 + t * 2.2).toFixed(2) + ")";
-    sc.ringSvg.style.opacity = (1 - t).toFixed(2);
-    sc.rays.style.transform = "translate(-50%,-50%) rotate(" + (t * 70) + "deg) scale(" + (.6 + t * 1.2).toFixed(2) + ")";
-    sc.rays.style.opacity = (smooth(.05, .3, t) * (1 - smooth(.8, 1, t))).toFixed(3);
-    sc.eagleSvg.style.opacity = (smooth(0, .1, t) * (1 - smooth(.9, 1, t))).toFixed(3);
-    sc.cap.style.opacity = (smooth(.14, .3, t) * (1 - smooth(.6, .78, t))).toFixed(3);
-  };
-
   /* 4a — OYUN: retro ızgara */
-  var GAME = addScene("game", "OYUN", 0.65, 0.725, function (sc, el) {
+  var GAME = addScene("game", "OYUN", 0.604, 0.694, function (sc, el) {
     var s = svg(el), defs = S("defs", {}, s);
     grad(defs, "gBg", [[0, "#1b0647"], [.58, "#07041f"], [1, "#050816"]]);
     grad(defs, "gSun", [[0, "#ffe27a"], [.5, "#ff5ec0"], [1, "#8b3cff"]]);
@@ -524,12 +393,13 @@
       it.e.setAttribute("x", it.x); it.e.setAttribute("y", y);
       it.e.setAttribute("transform", "rotate(" + (it.rot + t * 260) + " " + (it.x + it.size / 2) + " " + (y + it.size / 2) + ")");
     });
+    var vwU = VW / K / 2, fz = VW < 700 ? 20 : 30; sc.score.setAttribute("font-size", fz); sc.lives.setAttribute("font-size", fz); sc.score.setAttribute("y", VW < 700 ? 150 : 150); sc.score.setAttribute("x", 800 - vwU + 24); sc.lives.setAttribute("x", 800 + vwU - 24);
     var sco = Math.floor(t * 98765); sc.score.textContent = "SCORE " + ("000000" + sco).slice(-6);
     sc.lives.textContent = t > .75 ? "♥ ♥ ♥" : "♥ ♥ ♥";
   };
 
   /* 4b — WEB: tarayıcı penceresi kuruluyor */
-  var WEB = addScene("web", "WEB", 0.71, 0.785, function (sc, el) {
+  var WEB = addScene("web", "WEB", 0.676, 0.766, function (sc, el) {
     H("hs-bg grid-bg", "", el);
     var stage = H("web-stage", "", el);
     sc.code = [];
@@ -563,7 +433,7 @@
   };
 
   /* 4c — UYGULAMA: telefon yükseliyor */
-  var APP = addScene("app", "UYGULAMA", 0.77, 0.845, function (sc, el) {
+  var APP = addScene("app", "UYGULAMA", 0.748, 0.838, function (sc, el) {
     H("hs-bg grid-bg", "", el);
     var stage = H("app-stage", "", el);
     sc.orbit = H("orbit", "", stage);
@@ -590,7 +460,7 @@
 
 
   /* 4d — YAPAY ZEKÂ: sohbet + dönen sinir küresi + yetenekler */
-  var AI = addScene("ai", "YAPAY ZEKÂ", 0.83, 1.0, function (sc, el) {
+  var AI = addScene("ai", "YAPAY ZEKÂ", 0.81, 1.0, function (sc, el) {
     H("hs-bg grid-bg", "", el);
     var stage = H("ai-stage", "", el);
     sc.chat = H("ai-chat", '<div class="chat-head"><i></i><b>Yörükhan AI</b><span>çevrimiçi</span></div>' +
@@ -682,15 +552,13 @@
       if (sc.update) sc.update(t, time);
       if (op >= bestOp) { bestOp = op; active = i; }
     });
-    var f = smooth(.64, .66, p) * (1 - smooth(.66, .69, p));
-    flash.style.opacity = f.toFixed(3);
     dots.forEach(function (d, i) { d.classList.toggle("on", i === active); });
-    rail.style.opacity = p > .08 ? 1 : 0;
+    rail.style.opacity = p > .096 ? 1 : 0;
     if (active >= 0) {
       hudB.textContent = ("0" + (active + 1)).slice(-2) + " / " + ("0" + scenes.length).slice(-2);
       hudS.textContent = scenes[active].label;
     }
-    hud.style.opacity = p > .08 ? 1 : 0;
+    hud.style.opacity = p > .096 ? 1 : 0;
   }
   window.HeroScenes = { update: update };
 })();
