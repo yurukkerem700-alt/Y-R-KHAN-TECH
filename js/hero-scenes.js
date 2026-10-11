@@ -45,6 +45,11 @@
   };
 
   /* ---------- sahne iskeleti ---------- */
+  var K = 1, VW = innerWidth, VH = innerHeight;
+  function measure() { VW = pin.clientWidth || innerWidth; VH = pin.clientHeight || innerHeight; K = Math.max(VW / 1600, VH / 900); }
+  measure(); addEventListener("resize", measure);
+  function px(x) { return VW / 2 + (x - 800) * K; }
+  function py(y) { return VH / 2 + (y - 450) * K; }
   var hs = H("hs", "", pin);
   var scenes = [];
   function addScene(id, label, a, b, build) {
@@ -71,6 +76,8 @@
   };
   addScene("ocean", "OKYANUS", 0.09, 0.30, function (sc, el) {
     var s = svg(el), defs = S("defs", {}, s);
+    var sCloud = svg(el), sWave = svg(el), sDol = svg(el);
+    sc.cloudSvg = sCloud; sCloud.style.overflow = "visible";
     grad(defs, "oSky", [[0, "#050929"], [.55, "#2b1b6c"], [.86, "#b84c8c"], [1, "#ffa066"]]);
     grad(defs, "oSea", [[0, "#34307f"], [.25, "#171a5a"], [1, "#050720"]]);
     grad(defs, "oRefl", [[0, "#ffd9a0", .95], [.5, "#ff9a5e", .45], [1, "#ff7a4d", 0]]);
@@ -82,20 +89,21 @@
     for (var i = 0; i < 70; i++) S("circle", { cx: r() * 1600, cy: r() * 330, r: r() * 1.5 + .4, fill: "#fff", opacity: r() * .8 + .2 }, stars);
     sc.glow = S("circle", { cx: 800, cy: 560, r: 480, fill: "url(#oGlow)" }, s);
     sc.sun = S("circle", { cx: 800, cy: 560, r: 74, fill: "#ffe8b8" }, s);
-    sc.clouds = S("g", { filter: "url(#oBlur)" }, s);
+    sc.clouds = S("g", { filter: "url(#oBlur)" }, sCloud); S("defs", {}, sCloud).appendChild(blur.cloneNode(true));
     [[260, 300, 260, 34, .22], [1250, 250, 300, 38, .2], [800, 380, 360, 30, .16], [1450, 420, 220, 26, .22]].forEach(function (c) {
       S("ellipse", { cx: c[0], cy: c[1], rx: c[2], ry: c[3], fill: "#ff9fd0", opacity: c[4] }, sc.clouds);
     });
     S("rect", { y: 559, width: 1600, height: 341, fill: "url(#oSea)" }, s);
     S("polygon", { points: "770,560 830,560 1080,900 520,900", fill: "url(#oRefl)", opacity: .75 }, s);
+    var wd = S("defs", {}, sWave); grad(wd, "oWave", [[0, "#5a6fe0", .35], [.5, "#ffd7a0", 1], [1, "#5a6fe0", .35]], 1, 0, { gradientUnits: "userSpaceOnUse", x1: 0, x2: 1600, y1: 0, y2: 0 });
     sc.waves = [];
-    for (var w = 0; w < 18; w++) sc.waves.push(S("path", { fill: "none", stroke: "url(#oWave)", "stroke-linecap": "round" }, s));
+    for (var w = 0; w < 18; w++) sc.waves.push(S("path", { fill: "none", stroke: "url(#oWave)", "stroke-linecap": "round" }, sWave));
     sc.dol = [];
     [{ x0: 250, x1: 640, y: 660, h: 250, sc: .95, a: .16, b: .42 },
      { x0: 760, x1: 1210, y: 700, h: 330, sc: 1.3, a: .36, b: .68 },
      { x0: 1130, x1: 1500, y: 640, h: 220, sc: .8, a: .62, b: .9 }].forEach(function (c) {
-      var g = S("g", {}, s);
-      var splash = S("g", {}, s);
+      var g = S("g", {}, sDol);
+      var splash = S("g", {}, sDol);
       var ringA = S("ellipse", { fill: "none", stroke: "#ffe0b8", "stroke-width": 3 }, splash);
       var ringB = S("ellipse", { fill: "none", stroke: "#ffe0b8", "stroke-width": 3 }, splash);
       var drops = []; for (var d = 0; d < 9; d++) drops.push(S("circle", { r: 4, fill: "#ffe8c8" }, splash));
@@ -111,17 +119,14 @@
   var OCEAN = scenes[0];
   OCEAN.update = function (t, time) {
     var sc = OCEAN;
-    var set = lerp(0, 18, smooth(.0, 1, t));
-    sc.sun.setAttribute("cy", 560 + set);
-    sc.glow.setAttribute("cy", 560 + set);
-    sc.clouds.setAttribute("transform", "translate(" + (-t * 180) + ",0)");
+    sc.cloudSvg.style.transform = "translate3d(" + (-t * 180 * K) + "px,0,0)";
     var cam = t * 3.2 + time * .05;
     for (var i = 0; i < sc.waves.length; i++) {
       var u = ((i / sc.waves.length) + cam) % 1; if (u < 0) u += 1;
       var y = 560 + 345 * Math.pow(u, 2.1);
       var amp = 2 + 30 * u * u, wl = 80 + 300 * u, ph = i * 1.9 + time * (.4 + u);
       var d = "M-60 " + y.toFixed(1);
-      for (var x = -60; x <= 1700; x += 28) d += " L" + x + " " + (y + amp * Math.sin(x / wl * 6.283 + ph)).toFixed(1);
+      for (var x = -60; x <= 1700; x += 40) d += " L" + x + " " + (y + amp * Math.sin(x / wl * 6.283 + ph)).toFixed(1);
       sc.waves[i].setAttribute("d", d);
       sc.waves[i].setAttribute("stroke-width", (.7 + 3.4 * u).toFixed(2));
       sc.waves[i].setAttribute("opacity", Math.min(1, u * 4).toFixed(2));
@@ -176,43 +181,44 @@
     var s = svg(el), defs = S("defs", {}, s);
     grad(defs, "mSky", [[0, "#060a2b"], [.5, "#2c1d70"], [.82, "#a4468f"], [1, "#ff9468"]]);
     rgrad(defs, "mGlow", [[0, "#ffc58a", .9], [.4, "#ff7a8a", .35], [1, "#7c4dff", 0]]);
+    S("rect", { width: 1600, height: 900, fill: "url(#mSky)" }, s);
+    var r = rng(11), stars = S("g", {}, s);
+    for (var i = 0; i < 80; i++) S("circle", { cx: r() * 1600, cy: r() * 360, r: r() * 1.4 + .3, fill: "#fff", opacity: r() * .7 + .2 }, stars);
+    sc.glowSvg = svg(el);
+    S("circle", { cx: 800, cy: 640, r: 560, fill: "url(#mGlow)" }, sc.glowSvg).parentNode.insertBefore(S("defs", {}, sc.glowSvg), sc.glowSvg.firstChild).appendChild(defs.querySelector("#mGlow").cloneNode(true));
     var cfg = [{ base: 640, amp: 190, rough: .52, seed: 3, shift: 160, grow: .06, snow: "#ffffff", c: ["#9a8cf0", "#6a5cc4"] },
                { base: 700, amp: 250, rough: .54, seed: 8, shift: 330, grow: .14, snow: "#ece8ff", c: ["#7c6cd6", "#4c3fa0"] },
                { base: 780, amp: 320, rough: .55, seed: 21, shift: 560, grow: .26, snow: "#b9bfff", c: ["#51459f", "#2b2370"] },
                { base: 860, amp: 380, rough: .56, seed: 34, shift: 880, grow: .42, snow: "#7d88e8", c: ["#2c2676", "#141242"] },
                { base: 940, amp: 420, rough: .58, seed: 55, shift: 1300, grow: .7, snow: "#4a52b8", c: ["#14123e", "#070920"] }];
-    cfg.forEach(function (c, i) {
-      var g = S("linearGradient", { id: "mC" + i, gradientUnits: "userSpaceOnUse", x1: 0, x2: 0, y1: c.base - c.amp, y2: c.base + 80 }, defs);
-      [[0, c.snow], [.1, c.snow], [.3, c.c[0]], [1, c.c[1]]].forEach(function (st) { S("stop", { offset: st[0], "stop-color": st[1] }, g); });
-    });
-    S("rect", { width: 1600, height: 900, fill: "url(#mSky)" }, s);
-    var r = rng(11), stars = S("g", {}, s);
-    for (var i = 0; i < 80; i++) S("circle", { cx: r() * 1600, cy: r() * 360, r: r() * 1.4 + .3, fill: "#fff", opacity: r() * .7 + .2 }, stars);
-    sc.glow = S("circle", { cx: 800, cy: 640, r: 560, fill: "url(#mGlow)" }, s);
     sc.layers = [];
     cfg.forEach(function (c, i) {
-      var g = S("g", {}, s);
-      var inner = S("path", { d: ridge(c.seed, 3000, c.base, c.amp, c.rough), fill: "url(#mC" + i + ")", transform: "translate(-700,0)" }, g);
-      sc.layers.push({ g: g, c: c });
+      var ls = svg(el), ld = S("defs", {}, ls);
+      var g = S("linearGradient", { id: "mC" + i, gradientUnits: "userSpaceOnUse", x1: 0, x2: 0, y1: c.base - c.amp, y2: c.base + 80 }, ld);
+      [[0, c.snow], [.1, c.snow], [.3, c.c[0]], [1, c.c[1]]].forEach(function (st) { S("stop", { offset: st[0], "stop-color": st[1] }, g); });
+      S("path", { d: ridge(c.seed, 3000, c.base, c.amp, c.rough), fill: "url(#mC" + i + ")", transform: "translate(-700,0)" }, ls);
+      ls.style.willChange = "transform"; ls.style.overflow = "visible";
+      sc.layers.push({ g: ls, c: c });
     });
+    var ms = svg(el), md = S("defs", {}, ms);
+    var bf = S("filter", { id: "oBlurM", x: "-10%", y: "-100%", width: "120%", height: "300%" }, md); S("feGaussianBlur", { stdDeviation: 28 }, bf);
     sc.mist = [];
-    for (var m = 0; m < 3; m++) sc.mist.push(S("rect", { x: -200, y: 520 + m * 90, width: 2000, height: 120, fill: "#ffd0e8", opacity: .08 + m * .02, filter: "url(#oBlurM)" }, s));
-    var bf = S("filter", { id: "oBlurM", x: "-10%", y: "-100%", width: "120%", height: "300%" }, defs); S("feGaussianBlur", { stdDeviation: 28 }, bf);
+    for (var m = 0; m < 3; m++) sc.mist.push(S("rect", { x: -200, y: 520 + m * 90, width: 2000, height: 120, fill: "#ffd0e8", opacity: .08 + m * .02, filter: "url(#oBlurM)" }, ms));
+    sc.mistSvg = ms; ms.style.willChange = "transform"; ms.style.overflow = "visible";
     sc.cap = caption(el, "İNŞA ET", "Zirvelerden geç", "Her zirve, bir öncekinin üzerine inşa edilir.", "cap-bottom");
   });
   var MOUNT = scenes[1];
   MOUNT.update = function (t, time) {
-    var sc = MOUNT, rise = 1 - smooth(0, .22, t);
-    sc.glow.setAttribute("cy", 640 + t * 120);
-    sc.glow.setAttribute("opacity", (1 - t * .7).toFixed(2));
+    var sc = MOUNT, rise = 1 - smooth(0, .14, t);
+    sc.glowSvg.style.transform = "translate3d(0," + (t * 120 * K) + "px,0)";
+    sc.glowSvg.style.opacity = (1 - t * .7).toFixed(2);
     sc.layers.forEach(function (L, i) {
-      var c = L.c, sx = -t * c.shift * (i % 2 ? 1 : -1);
-      var sy = rise * (260 + i * 90);
-      var scl = 1 + t * c.grow;
-      L.g.setAttribute("transform", "translate(" + (sx).toFixed(1) + "," + (sy).toFixed(1) + ") translate(800,860) scale(" + scl.toFixed(3) + ") translate(-800,-860)");
+      var c = L.c, sx = -t * c.shift * (i % 2 ? 1 : -1), sy = rise * (260 + i * 90), scl = 1 + t * c.grow;
+      L.g.style.transformOrigin = px(800) + "px " + py(860) + "px";
+      L.g.style.transform = "translate3d(" + (sx * K).toFixed(1) + "px," + (sy * K).toFixed(1) + "px,0) scale(" + scl.toFixed(3) + ")";
     });
+    sc.mistSvg.style.transform = "translate3d(" + (-t * 300 * K) + "px,0,0)";
     sc.cap.style.opacity = (smooth(0.0, .1, t) * (1 - smooth(.36, .5, t))).toFixed(3);
-    sc.mist.forEach(function (m, i) { m.setAttribute("x", -200 + Math.sin(time * .2 + i) * 80 - t * 200 * (i + 1)); });
   };
 
   /* =========================================================
@@ -244,14 +250,16 @@
     return wing;
   }
   addScene("eagle", "ANADOLU", 0.455, 0.615, function (sc, el) {
-    var s = svg(el), defs = S("defs", {}, s);
+    var gs = svg(el), gd = S("defs", {}, gs);
+    rgrad(gd, "eGlow", [[0, "#7fe9ff", .75], [.45, "#3b82f6", .3], [1, "#8b5cf6", 0]]);
+    sc.glow = S("circle", { cx: 800, cy: 450, r: 520, fill: "url(#eGlow)" }, gs); sc.glowSvg = gs; gs.style.willChange = "transform";
+    var rs = svg(el); sc.ringSvg = rs; rs.style.willChange = "transform, opacity";
+    var rg = S("g", { fill: "none", stroke: "#7fe9ff", "stroke-opacity": .35, "stroke-width": 2 }, rs);
+    for (var i = 0; i < 3; i++) S("circle", { cx: 800, cy: 450, r: 300 + i * 120 }, rg);
+    var s = svg(el), defs = S("defs", {}, s); sc.eagleSvg = s; s.style.willChange = "transform, opacity";
     grad(defs, "eW", [[0, "#7fe9ff", .95], [.5, "#3b82f6", .9], [1, "#8b5cf6", .95]], 1, 1);
     grad(defs, "eS", [[0, "#e6fbff"], [1, "#a5b4ff"]], 1, 1);
-    rgrad(defs, "eGlow", [[0, "#7fe9ff", .75], [.45, "#3b82f6", .3], [1, "#8b5cf6", 0]]);
-    sc.glow = S("circle", { cx: 800, cy: 450, r: 520, fill: "url(#eGlow)" }, s);
-    sc.rings = S("g", { fill: "none", stroke: "#7fe9ff", "stroke-opacity": .35, "stroke-width": 2 }, s);
-    for (var i = 0; i < 3; i++) S("circle", { cx: 800, cy: 450, r: 300 + i * 120 }, sc.rings);
-    sc.eagle = S("g", {}, s);
+    sc.eagle = S("g", { transform: "translate(800,540) translate(0,-110)" }, s);
     var half = S("g", {}, sc.eagle), mir = S("g", { transform: "scale(-1,1)" }, sc.eagle);
     sc.wL = eagleHalf(half, "e"); sc.wR = eagleHalf(mir, "e");
     var body = S("g", {}, sc.eagle);
@@ -269,16 +277,18 @@
   EAGLE.update = function (t, time) {
     var sc = EAGLE, e = smooth(0, 1, t);
     var scale = .1 + 3.1 * Math.pow(t, 2.3);
-    var y = 430 + (1 - e) * 80 - t * 40;
+    var yy = 430 + (1 - e) * 80 - t * 40;
     var tilt = Math.sin(time * .8) * 2;
-    sc.eagle.setAttribute("transform", "translate(800," + y.toFixed(1) + ") rotate(" + tilt.toFixed(2) + ") scale(" + scale.toFixed(3) + ") translate(0,-110)");
-    var flap = Math.sin(t * 34) * 7;
-    sc.wL.style.transform = "rotate(" + (-flap) + "deg) scaleY(" + (1 - Math.abs(flap) * .012) + ")";
-    sc.wR.style.transform = "rotate(" + (-flap) + "deg) scaleY(" + (1 - Math.abs(flap) * .012) + ")";
-    sc.glow.setAttribute("r", 380 + t * 520);
-    sc.rings.setAttribute("transform", "translate(800,450) scale(" + (.5 + t * 2.2).toFixed(2) + ") translate(-800,-450)");
-    sc.rings.setAttribute("opacity", (1 - t).toFixed(2));
-    sc.eagle.style.opacity = (smooth(0, .12, t) * (1 - smooth(.88, 1, t))).toFixed(3);
+    sc.eagleSvg.style.transformOrigin = px(800) + "px " + py(540) + "px";
+    sc.eagleSvg.style.transform = "translate3d(0," + ((yy - 540) * K).toFixed(1) + "px,0) rotate(" + tilt.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
+    var flap = Math.sin(t * 34) * 7, fr = "rotate(" + (-flap) + "deg) scaleY(" + (1 - Math.abs(flap) * .012) + ")";
+    sc.wL.style.transform = fr; sc.wR.style.transform = fr;
+    sc.glowSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
+    sc.glowSvg.style.transform = "scale(" + (.75 + t * 1.0).toFixed(3) + ")";
+    sc.ringSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
+    sc.ringSvg.style.transform = "scale(" + (.5 + t * 2.2).toFixed(2) + ")";
+    sc.ringSvg.style.opacity = (1 - t).toFixed(2);
+    sc.eagleSvg.style.opacity = (smooth(0, .12, t) * (1 - smooth(.88, 1, t))).toFixed(3);
     sc.cap.style.opacity = (smooth(.12, .3, t) * (1 - smooth(.62, .8, t))).toFixed(3);
   };
 
