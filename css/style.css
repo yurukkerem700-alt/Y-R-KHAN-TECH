@@ -257,3 +257,26 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
   .reveal { opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
 }
+
+/* ---------- Teknoloji bandı ---------- */
+.marquee { overflow: hidden; border-block: 1px solid var(--line); background: rgba(10,16,48,.45); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+.marquee-track { display: flex; gap: 14px; width: max-content; padding: 18px 0; animation: marquee 38s linear infinite; }
+.marquee-track span { padding: 8px 22px; border-radius: 999px; border: 1px solid var(--line); font-family: var(--font-head); font-size: .74rem; letter-spacing: .12em; color: var(--muted); white-space: nowrap; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ---------- SSS ---------- */
+.faq details { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); margin-bottom: 14px; padding: 0 24px; }
+.faq summary { cursor: pointer; padding: 20px 0; font-weight: 700; list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; color: var(--cyan); font-size: 1.4rem; line-height: 1; transition: transform .25s; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq details p { color: var(--muted); margin: 0 0 20px; }
+
+/* ---------- Hedefler ve değerler ---------- */
+.goals { display: grid; gap: 14px; margin-top: 18px; }
+.goal { padding: 18px 22px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); }
+.goal b { font-family: var(--font-head); color: var(--cyan); font-size: .85rem; letter-spacing: .2em; }
+.goal p { margin: 6px 0 0; font-size: .98rem; }
+.values { display: grid; gap: 10px; margin-top: 18px; }
+.values div { padding: 14px 18px; border-left: 2px solid var(--violet); background: rgba(139,92,246,.07); border-radius: 0 12px 12px 0; color: #c6cdee; font-size: .98rem; }
+.values b { font-family: var(--font-head); color: var(--cyan); margin-right: 8px; }

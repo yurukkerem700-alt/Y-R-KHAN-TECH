@@ -17,11 +17,11 @@ window.SITE = {
    featured : true ise ana sayfada gösterilir
 */
 window.PROJECTS = [
-  { name: "Yörükhan Gamess", hue: 215, tags: ["Oyun"],      featured: true,  url: "", image: "", desc: "Yörükhan Tech'in oyun markası. Oyunlarımız bu çatı altında yayınlanıyor." },
-  { name: "Toksikmetre",     hue: 285, tags: ["Uygulama"], featured: true,  url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
-  { name: "Kejder",          hue: 185, tags: ["Web"],      featured: true,  url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
-  { name: "Akvaryum",        hue: 200, tags: ["Proje"],    featured: false, url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
-  { name: "Niksar",          hue: 160, tags: ["Proje"],    featured: false, url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
-  { name: "Tunruva",         hue: 250, tags: ["Proje"],    featured: false, url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
-  { name: "Sabri",           hue: 320, tags: ["Proje"],    featured: false, url: "", image: "", desc: "Kullanıma hazır, yayında olan çalışmalarımızdan biri." },
+  { name: "USTABAŞI",        hue: 25,  tags: ["Web", "Platform"],  featured: true,  url: "https://ustabasii.com.tr",          image: "", desc: "Esnaf ile müşteriyi buluşturan geniş çaplı platform. C#, ASP.NET Core ve PostgreSQL ile sıfırdan geliştirildi." },
+  { name: "Akvaryumi",       hue: 195, tags: ["3D Oyun", "Web"],   featured: true,  url: "https://akvaryumi.vercel.app",      image: "", desc: "YÖRÜKHAN markası altında geliştirilen, tarayıcıda oynanan etkileşimli üç boyutlu akvaryum oyunu." },
+  { name: "Niksar Turnuva",  hue: 150, tags: ["Web Uygulaması"],   featured: true,  url: "https://niksarturnuva.com",         image: "", desc: "Niksar'daki yerel amatör futbol turnuvasını yayınlayan, maçları ve istatistikleri dijitalde takip ettiren platform." },
+  { name: "Yörükhan Gamess", hue: 215, tags: ["Oyun Portalı"],     featured: false, url: "https://yorukhangameess.vercel.app", image: "", desc: "YÖRÜKHAN markasının oyun portalı. Oyunlarımız bu çatı altında yayınlanıyor." },
+  { name: "Toksikmetre",     hue: 285, tags: ["Web"],              featured: false, url: "https://toksikmetre.vercel.app",    image: "", desc: "Yayında olan, kullanıma hazır çalışmalarımızdan biri." },
+  { name: "Kejder",          hue: 185, tags: ["Web"],              featured: false, url: "https://kejder.vercel.app",         image: "", desc: "Yayında olan, kullanıma hazır çalışmalarımızdan biri." },
+  { name: "Sabri",           hue: 320, tags: ["Web"],              featured: false, url: "https://sabri-zeta.vercel.app",     image: "", desc: "Yayında olan, kullanıma hazır çalışmalarımızdan biri." },
 ];
