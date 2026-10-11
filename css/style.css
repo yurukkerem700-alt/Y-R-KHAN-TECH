@@ -280,3 +280,61 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--c
 .values { display: grid; gap: 10px; margin-top: 18px; }
 .values div { padding: 14px 18px; border-left: 2px solid var(--violet); background: rgba(139,92,246,.07); border-radius: 0 12px 12px 0; color: #c6cdee; font-size: .98rem; }
 .values b { font-family: var(--font-head); color: var(--cyan); margin-right: 8px; }
+
+/* ==========================================================
+   MASAÜSTÜ KAYDIRMA ANİMASYONLARI  (html.fx = geniş ekran + fare)
+   Mobilde bu bölümün hiçbiri çalışmaz.
+   ========================================================== */
+.hero-pin { display: contents; }
+.scene, .scene-panels, .rail { display: none; }
+.fx-bar { display: none; }
+
+html.fx .fx-bar { display: block; position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 80; transform-origin: 0 50%; transform: scaleX(0); background: var(--grad); box-shadow: 0 0 14px var(--cyan); }
+
+/* --- Kapak: kaydırdıkça ilerleyen sinematik sahne --- */
+html.fx .hero { display: block; min-height: 0; height: 460vh; overflow: visible; isolation: auto; }
+html.fx .hero::after, html.fx .hero-orb, html.fx .hero-layer { display: none; }
+html.fx .hero-pin { display: block; position: sticky; top: 0; height: 100vh; overflow: hidden; isolation: isolate; background: #03050f; }
+html.fx .scene { display: block; position: absolute; inset: 0; z-index: 0; }
+html.fx .sl { position: absolute; inset: -4%; background: center / cover no-repeat url("../assets/kapak.webp"); transform-origin: 50% 72%; will-change: transform, filter; }
+html.fx .sl-sky   { -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 83%); mask-image: linear-gradient(to bottom, #000 72%, transparent 83%); }
+html.fx .sl-land  { -webkit-mask-image: linear-gradient(to bottom, transparent 71%, #000 80%, #000 86%, transparent 97%); mask-image: linear-gradient(to bottom, transparent 71%, #000 80%, #000 86%, transparent 97%); }
+html.fx .sl-rocks { -webkit-mask-image: linear-gradient(to top, #000 4%, #000 12%, transparent 30%); mask-image: linear-gradient(to top, #000 4%, #000 12%, transparent 30%); }
+html.fx .sun-glow { position: absolute; left: 50%; top: 78%; width: 70vmax; height: 70vmax; margin: -35vmax 0 0 -35vmax; border-radius: 50%; mix-blend-mode: screen; pointer-events: none; will-change: transform, opacity;
+  background: radial-gradient(circle, rgba(255,200,140,.95) 0%, rgba(255,130,70,.45) 14%, rgba(180,90,255,.18) 34%, transparent 62%); opacity: 0; }
+html.fx .orbits { position: absolute; right: 0; top: 0; width: 62%; height: 62%; fill: none; stroke: var(--cyan); stroke-width: 1.4; opacity: .75; filter: drop-shadow(0 0 6px var(--cyan)); }
+html.fx .orbits path { stroke-dasharray: 1400; stroke-dashoffset: 1400; }
+html.fx .orbits path:nth-child(2) { stroke: var(--blue); } html.fx .orbits path:nth-child(3) { stroke: var(--violet); }
+html.fx .darken { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 55%, rgba(5,8,22,.55), rgba(3,5,15,.96) 85%); opacity: 0; }
+html.fx .vignette { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(5,8,22,.55) 0%, transparent 22%, transparent 76%, rgba(5,8,22,.85) 100%); pointer-events: none; }
+html.fx .shoot { position: absolute; width: 150px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, #fff, var(--cyan)); opacity: 0; transform: rotate(28deg); filter: drop-shadow(0 0 6px var(--cyan)); animation: shoot 7s linear infinite; }
+html.fx .shoot.s1 { left: 12%; top: 8%; } html.fx .shoot.s2 { left: 48%; top: 4%; animation-delay: 2.6s; animation-duration: 9s; } html.fx .shoot.s3 { left: 70%; top: 14%; animation-delay: 5s; }
+@keyframes shoot { 0% { opacity: 0; translate: 0 0; } 3% { opacity: 1; } 12% { opacity: 0; translate: 380px 200px; } 100% { opacity: 0; translate: 380px 200px; } }
+
+html.fx .hero-body { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; padding-bottom: 34px; will-change: transform, opacity; }
+html.fx .hero-body .container { width: 100%; }
+
+html.fx .scene-panels { display: block; position: absolute; inset: 0; z-index: 4; pointer-events: none; }
+html.fx .panel { position: absolute; left: 50%; top: 50%; width: min(760px, 86vw); text-align: center; opacity: 0; will-change: transform, opacity, filter; translate: -50% -50%; }
+html.fx .panel small { display: block; font-family: var(--font-head); letter-spacing: .4em; font-size: .78rem; color: var(--cyan); margin-bottom: 16px; }
+html.fx .panel h2 { font-size: clamp(2.2rem, 5.2vw, 4.4rem); margin-bottom: .35em; text-shadow: 0 0 40px rgba(59,130,246,.6); }
+html.fx .panel p { color: #c6cdee; font-size: 1.2rem; max-width: 560px; margin: 0 auto; }
+html.fx .panel-icon { width: 96px; height: 96px; margin: 0 auto 24px; border-radius: 28px; display: grid; place-items: center; border: 1px solid var(--line);
+  background: linear-gradient(140deg, rgba(34,211,238,.2), rgba(139,92,246,.28)); box-shadow: 0 0 60px rgba(59,130,246,.5), inset 0 0 30px rgba(255,255,255,.06); }
+html.fx .panel-icon svg { width: 46px; height: 46px; stroke: #fff; fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+html.fx .panel.final h2 span { display: inline-block; }
+
+html.fx .rail { display: flex; flex-direction: column; gap: 14px; position: absolute; right: 36px; top: 50%; translate: 0 -50%; z-index: 6; }
+html.fx .rail i { width: 10px; height: 10px; border-radius: 50%; border: 2px solid rgba(255,255,255,.4); transition: .3s; }
+html.fx .rail i.on { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); transform: scale(1.5); }
+
+/* --- Her sayfada: kaydırmayla ilerleyen öğeler --- */
+html.fx .reveal { opacity: 1; transform: none; transition: none; will-change: translate, opacity, scale; }
+html.fx .marquee-track { animation: none; will-change: transform; }
+html.fx .page-hero::before { transform: translateY(var(--py, 0px)); }
+html.fx .page-hero .container { will-change: transform, opacity; }
+html.fx .timeline::before { transform-origin: top; transform: scaleY(var(--tl, 0)); }
+html.fx .tl-item::before { transition: .4s; border-color: rgba(120,150,255,.3); box-shadow: none; }
+html.fx .tl-item.on::before { border-color: var(--cyan); box-shadow: 0 0 14px var(--cyan); }
+html.fx .tl-item { transition: opacity .4s; opacity: .35; } html.fx .tl-item.on { opacity: 1; }
+html.fx .project-cover span { will-change: transform; }

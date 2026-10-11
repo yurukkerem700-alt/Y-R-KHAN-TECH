@@ -78,7 +78,7 @@
       var a = .35 + .4 * Math.sin(t / 900 + s.p);
       ctx.fillStyle = "rgba(" + s.c + "," + a + ")";
       ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.28); ctx.fill();
-      if (!reduce) { s.y -= s.s; if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; } }
+      if (!reduce) { s.y -= s.s * (1 + (window.__boost || 0)); if (s.y < -4) { s.y = H + 4; s.x = Math.random() * W; } }
     });
     if (!reduce) requestAnimationFrame(draw);
   }

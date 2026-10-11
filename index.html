@@ -14,12 +14,23 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<script>if(matchMedia("(min-width:1025px) and (hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("fx")</script>
 </head>
 <body data-page="home">
 
 <main>
-<section class="hero" aria-label="Yörükhan Tech kapak">
+<section class="hero" id="hero" aria-label="Yörükhan Tech kapak">
+ <div class="hero-pin">
   <div class="hero-layer" role="img" aria-label="Yörükhan Tech — Yapay zekâ destekli dijital deneyimler. Oyun, web, uygulama ve yapay zekâ."></div>
+  <div class="scene" aria-hidden="true">
+    <div class="sl sl-sky"></div><div class="sl sl-land"></div><div class="sl sl-rocks"></div>
+    <div class="sun-glow"></div>
+    <svg class="orbits" viewBox="0 0 800 520" preserveAspectRatio="xMaxYMin slice"><path d="M-20 360 C 200 120 520 60 820 150"/><path d="M60 470 C 300 210 560 150 830 260"/><path d="M150 520 C 380 330 620 280 840 380"/></svg>
+    <span class="shoot s1"></span><span class="shoot s2"></span><span class="shoot s3"></span>
+    <div class="darken"></div><div class="vignette"></div>
+  </div>
+  <div class="scene-panels" aria-hidden="true"><div class="panel"><div class="panel-icon"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10.5v4M5 12.5h4M16 11.5h.01M18.5 13.5h.01"/></svg></div><small>01 / 04</small><h2>Oyun Geliştirme</h2><p>Eğlenceli, akıcı ve tarayıcıdan anında oynanan oyunlar.</p></div><div class="panel"><div class="panel-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c3 3 3 16.5 0 19M12 2.5c-3 3-3 16.5 0 19"/></svg></div><small>02 / 04</small><h2>Web Geliştirme</h2><p>Hızlı, modern ve her ekrana uyumlu siteler ve platformlar.</p></div><div class="panel"><div class="panel-icon"><svg viewBox="0 0 24 24"><rect x="6.5" y="2" width="11" height="20" rx="2.5"/><path d="M11 18.5h2"/></svg></div><small>03 / 04</small><h2>Uygulama Geliştirme</h2><p>Kullanımı kolay, amaca odaklı uygulamalar; fikirden yayına.</p></div><div class="panel"><div class="panel-icon"><svg viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V4a3 3 0 0 0-3 0zM15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></svg></div><small>04 / 04</small><h2>Yapay Zekâ</h2><p>Üretimin ve ürünlerin merkezinde, hızı ve fikri büyüten güç.</p></div><div class="panel final"><small>YÖRÜKHAN TECH</small><h2><span>Hayal et.</span> <span>İnşa et.</span> <span>Oyna.</span> <span class="grad-text">Birlikte.</span></h2><p>Aşağı kaydır ve çalışmalarımızı keşfet.</p></div></div>
+  <div class="rail" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
   <div class="hero-orb o1"></div><div class="hero-orb o2"></div>
   <h1 class="sr-only">Yörükhan Tech — Yapay Zekâ Destekli Dijital Deneyimler</h1>
   <div class="container hero-body">
@@ -30,6 +41,7 @@
     </div>
     <div class="scroll-hint" aria-hidden="true"></div>
   </div>
+ </div>
 </section>
 
 <section class="section" style="padding:10px 0 40px"><div class="marquee" aria-label="Kullandığımız teknolojiler"><div class="marquee-track"><span>JavaScript</span><span>HTML5 Canvas</span><span>Three.js</span><span>Tailwind CSS</span><span>C# · ASP.NET Core</span><span>PostgreSQL</span><span>Supabase</span><span>Vercel</span><span>GitHub</span><span>Illustrator</span><span>Photoshop</span><span>Yapay Zekâ</span><span>JavaScript</span><span>HTML5 Canvas</span><span>Three.js</span><span>Tailwind CSS</span><span>C# · ASP.NET Core</span><span>PostgreSQL</span><span>Supabase</span><span>Vercel</span><span>GitHub</span><span>Illustrator</span><span>Photoshop</span><span>Yapay Zekâ</span></div></div></section>
@@ -97,5 +109,6 @@
 </main>
 <script src="js/data.js"></script>
 <script src="js/main.js"></script>
+<script src="js/scroll-fx.js"></script>
 </body>
 </html>
