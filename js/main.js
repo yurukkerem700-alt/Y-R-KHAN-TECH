@@ -32,7 +32,7 @@
     '<div class="container"><div class="footer-grid">' +
     '<div><a class="brand" href="index.html"><img src="assets/y-mark.webp" alt="" width="60" height="40"><span><b>YÖRÜKHAN</b><small>TECH</small></span></a>' +
     '<p style="margin-top:18px;max-width:340px">Yapay zekâ destekli dijital deneyimler. Oyun, web ve uygulama geliştiriyor; talep üzerine özel projeler üretiyoruz.</p>' +
-    '<span class="motto">HAYAL ET · İNŞA ET · OYNA · BİRLİKTE</span></div>' +
+    '<span class="motto">ANADOLU\'DAN EVRENE</span></div>' +
     '<div><h4>SAYFALAR</h4><ul>' +
     '<li><a href="index.html">Ana Sayfa</a></li><li><a href="hizmetler.html">Hizmetler</a></li><li><a href="projeler.html">Projeler</a></li>' +
     '<li><a href="hakkimda.html">Hakkımda</a></li><li><a href="iletisim.html">İletişim</a></li></ul></div>' +
