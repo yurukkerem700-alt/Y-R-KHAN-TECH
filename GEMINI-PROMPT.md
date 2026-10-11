@@ -8,11 +8,11 @@ Aşağıdaki kutunun içindekini olduğu gibi Gemini'ye yapıştır. Gelen cevab
 Merhaba Gemini. Seninle uzun süredir konuşuyoruz; bu yüzden beni, ilgi alanlarımı, projelerimi ve hedeflerimi benden başkası kadar iyi biliyorsun. Hakkımdaki bu bilgileri kullanarak şirket web siteme koyacağım "Hakkımda" ve "CV" içeriğini hazırlamanı istiyorum.
 
 KİM İÇİN, NE İÇİN?
-- Adım: Kerem Yörük, 18 yaşındayım.
+- Adım: Kerem Yürük, 18 yaşındayım.
 - Tokat'ın Niksar ilçesinde Bilgisayar Programcılığı okuyorum. Asıl memleketim Kocaeli Kandıra. 5 kişilik ailenin en büyük oğluyum.
 - Henüz resmen kurulmamış teknoloji şirketim "Yörükhan Tech" için web sitesi yapıyorum. Slogan: "AI-Powered Digital Experiences". Motto: "Dream. Build. Play. Together."
 - Şirket oyun, web sitesi, mobil uygulama ve yapay zekâ üzerine çalışacak; talep üzerine özel projeler de yapacak.
-- Hazır projelerim: Kejder, Akvaryum, Niksar, Tunruva, Yörükhan Gamess, Toksikmetre, Sabri.
+- Hazır projelerim: Kejder, Akvaryum Seferi, Niksar Turnuva, Yörükhan Games, Toksikmetre, Sabri.
 - İletişim: yurukkerem700@gmail.com, Instagram: kereemyuruk
 
 SENDEN İSTEDİĞİM
