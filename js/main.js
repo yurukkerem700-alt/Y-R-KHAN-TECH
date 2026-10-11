@@ -32,7 +32,7 @@
     '<div class="container"><div class="footer-grid">' +
     '<div><a class="brand" href="index.html"><img src="assets/y-mark.webp" alt="" width="60" height="40"><span><b>YÖRÜKHAN</b><small>TECH</small></span></a>' +
     '<p style="margin-top:18px;max-width:340px">Yapay zekâ destekli dijital deneyimler. Oyun, web ve uygulama geliştiriyor; talep üzerine özel projeler üretiyoruz.</p>' +
-    '<span class="motto">ANADOLU\'DAN EVRENE</span></div>' +
+    '<span class="motto">AI-POWERED DIGITAL EXPERIENCES</span></div>' +
     '<div><h4>SAYFALAR</h4><ul>' +
     '<li><a href="index.html">Ana Sayfa</a></li><li><a href="hizmetler.html">Hizmetler</a></li><li><a href="projeler.html">Projeler</a></li>' +
     '<li><a href="hakkimda.html">Hakkımda</a></li><li><a href="iletisim.html">İletişim</a></li></ul></div>' +
@@ -115,7 +115,11 @@
   /* ---------- Proje kartları ---------- */
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function projectCard(p, i) {
-    var cover = p.image ? '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + ' kapak görseli" loading="lazy">' : "<span>" + esc(p.name.charAt(0)) + "</span>";
+    var cover = "<span>" + esc(p.name.charAt(0)) + "</span>";
+    if (p.word) cover = '<span class="p-word">' + esc(p.word) + "</span>";
+    else if (p.mark) cover = '<span class="p-mark">' + p.mark + "</span>";
+    else if (p.logo) cover = '<img class="p-logo" src="' + esc(p.logo) + '" alt="' + esc(p.name) + ' simgesi" loading="lazy" onerror="this.outerHTML=\'<span>' + esc(p.name.charAt(0)) + '</span>\'">';
+    if (p.image) cover = '<img src="' + esc(p.image) + '" alt="' + esc(p.name) + ' kapak görseli" loading="lazy" referrerpolicy="no-referrer" onerror="this.outerHTML=\'<span>' + esc(p.name.charAt(0)) + '</span>\'">';
     var btn = p.url
       ? '<a class="btn btn-ghost" href="' + esc(p.url) + '" target="_blank" rel="noopener">Projeyi Gör →</a>'
       : '<span class="btn btn-ghost disabled">Bağlantı yakında</span>';

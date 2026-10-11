@@ -424,3 +424,27 @@ html.fx .ai-chips span.lit { color: #04102b; background: linear-gradient(120deg,
 
 html.fx .final-box em { display: block; margin-top: 30px; font-style: normal; font-family: var(--font-head); font-size: .75rem; letter-spacing: .4em; color: var(--teal); text-transform: uppercase; }
 html.fx .final-box h2 { font-size: clamp(3rem, 8vw, 7rem); }
+
+/* ---------- Ses düğmesi ---------- */
+.snd { position: fixed; right: 20px; bottom: 20px; z-index: 90; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: rgba(8,14,44,.82); backdrop-filter: blur(10px); color: #fff; cursor: pointer; display: grid; place-items: center; transition: .25s; }
+.snd:hover { border-color: var(--teal); box-shadow: 0 0 22px rgba(45,212,191,.4); }
+.snd svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; grid-area: 1/1; }
+.snd .w1, .snd .w2 { opacity: 0; } .snd .x { opacity: 1; stroke: #ff7a9a; }
+.snd.on { border-color: var(--teal); color: var(--teal); } .snd.on .w1, .snd.on .w2 { opacity: 1; } .snd.on .x { opacity: 0; }
+.snd i { display: none; }
+@media (max-width: 760px) { .snd { right: 14px; bottom: 14px; width: 44px; height: 44px; } }
+html.fx .hs-hud { left: 36px; }
+
+/* ---------- Kapak dünyasında gezinti ---------- */
+html.fx .tour-sky { position: absolute; inset: 0; background: linear-gradient(180deg, #000f27 0%, #07164a 24%, #1b2872 42%, #4a4490 54%, #7d5aa4 60%, #1d1830 61%, #0a0912 100%); }
+html.fx .tour-sky .hs-svg { position: absolute; inset: 0; }
+html.fx .tour-glow { position: absolute; border-radius: 50%; pointer-events: none; mix-blend-mode: screen; will-change: transform, opacity;
+  background: radial-gradient(circle, rgba(255,196,140,.95) 0%, rgba(255,128,96,.45) 10%, rgba(170,96,255,.16) 30%, transparent 58%); }
+html.fx .tour-water { position: absolute; left: 0; right: 0; top: 62%; bottom: 0; background: radial-gradient(ellipse at 50% 0%, #4d4260, #231f33 55%, #0a0913); }
+html.fx .tour-layer { position: absolute; background: url("../assets/kapak.webp") 0 0 / 100% 100% no-repeat; will-change: transform; pointer-events: none; }
+
+/* proje kapakları */
+.project-cover .p-logo { position: relative; width: 104px; height: 104px; border-radius: 24px; object-fit: cover; box-shadow: 0 0 40px hsl(var(--h) 100% 60% / .6); }
+.project-cover .p-mark { position: relative; font-size: 4.4rem; filter: drop-shadow(0 0 24px hsl(var(--h) 100% 60%)); }
+.project-cover .p-word { position: relative; font-family: var(--font-head); font-weight: 800; font-size: 2.6rem; letter-spacing: .08em; background: linear-gradient(45deg, #fff, #ff2e93, #00f0ff); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 18px rgba(255,0,127,.6)); }
+html.fx .tour-warm { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 18%, rgba(130,80,150,.5) 40%, rgba(235,140,120,.55) 56%, rgba(255,170,130,.35) 61%, transparent 64%); }

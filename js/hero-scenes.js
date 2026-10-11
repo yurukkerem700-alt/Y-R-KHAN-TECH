@@ -68,129 +68,152 @@
   var rail = H("rail2", "", pin);
 
   /* =========================================================
-     1) OKYANUS  (kapaktaki dağlar arasındaki deniz + yunuslar)
+     KAPAK DÜNYASINDA GEZİNTİ
+     Kapak görselinin kendisi katmanlara ayrılır (bulut/yan dağlar, dağlar, göl, kayalar),
+     kamera güneşe doğru ilerlerken her katman farklı hızda yaklaşır.
      ========================================================= */
+  var SUN = [864, 745], IMGW = 1672, IMGH = 941;
+  function setMask(el, layers, intersect) {
+    var v = layers.join(",");
+    el.style.webkitMaskImage = v; el.style.maskImage = v;
+    el.style.webkitMaskRepeat = el.style.maskRepeat = "no-repeat";
+    el.style.webkitMaskSize = el.style.maskSize = "100% 100%";
+    if (intersect) { el.style.webkitMaskComposite = "source-in"; el.style.maskComposite = "intersect"; }
+  }
+  var MASKS = {
+    sides: [["linear-gradient(90deg,#000 0,#000 21%,transparent 29%,transparent 71%,#000 79%,#000 100%)", "linear-gradient(180deg,transparent 50%,#000 62%,#000 80%,transparent 85%)"], true],
+    mount: [["linear-gradient(180deg,transparent 70%,#000 71.8%,#000 80%,transparent 85.5%)"], false],
+    lake: [["linear-gradient(180deg,transparent 79%,#000 85%)"], false],
+    rocks: [["linear-gradient(90deg,#000 0,#000 14%,transparent 22%,transparent 80%,#000 89%,#000 100%)", "linear-gradient(180deg,transparent 86%,#000 91%)"], true]
+  };
+  function buildTour(el) {
+    var T = { key: "" };
+    T.sky = H("tour-sky", "", el);
+    var ss = svg(T.sky), r = rng(21);
+    for (var i = 0; i < 90; i++) S("circle", { cx: r() * 1600, cy: r() * 420, r: r() * 1.4 + .3, fill: "#fff", opacity: r() * .7 + .2 }, ss);
+    var cd = S("defs", {}, ss), cf = S("filter", { id: "tBlur" + Math.round(Math.random() * 1e6), x: "-30%", y: "-30%", width: "160%", height: "160%" }, cd);
+    S("feGaussianBlur", { stdDeviation: 30 }, cf);
+    var cg = S("g", { filter: "url(#" + cf.getAttribute("id") + ")" }, ss);
+    [[420, 330, 300, 46, "#ff9fd0", .16], [1180, 280, 340, 50, "#b9a2ff", .18], [820, 400, 380, 40, "#ffb7a0", .14]].forEach(function (c) { S("ellipse", { cx: c[0], cy: c[1], rx: c[2], ry: c[3], fill: c[4], opacity: c[5] }, cg); });
+    T.warm = H("tour-warm", "", el);
+    T.glow = H("tour-glow", "", el);
+    T.water = H("tour-water", "", el);
+    T.L = {};
+    ["sides", "mount", "lake"].forEach(function (n) {
+      var d = H("tour-layer", "", el); setMask(d, MASKS[n][0], MASKS[n][1]); T.L[n] = d;
+    });
+    T.waveSvg = svg(el);
+    return T;
+  }
+  function placeTour(T) {
+    var key = VW + "x" + VH; if (T.key === key) return; T.key = key;
+    var s = VW * 1.8 / IMGW; T.s = s;
+    T.left = VW / 2 - SUN[0] * s; T.top = VH * .6 - SUN[1] * s;
+    for (var n in T.L) {
+      var d = T.L[n];
+      d.style.width = IMGW * s + "px"; d.style.height = IMGH * s + "px"; d.style.left = T.left + "px"; d.style.top = T.top + "px";
+      d.style.transformOrigin = SUN[0] * s + "px " + SUN[1] * s + "px";
+    }
+    var r = VW * .55;
+    T.glow.style.cssText += ";width:" + 2 * r + "px;height:" + 2 * r + "px;left:" + (VW / 2 - r) + "px;top:" + (VH * .6 - r) + "px";
+  }
+  function camTour(T, z, dy) {
+    for (var n in T.L) T.L[n].style.transform = "translate3d(0," + ((dy && dy[n]) || 0) + "px,0) scale(" + z[n].toFixed(3) + ")";
+  }
+
+  /* ---------- doğal yunuslar ---------- */
   var DOLPHIN = {
     body: "M110 8 C104 4 94 0 84 -6 C80 -16 70 -26 56 -30 C34 -40 4 -44 -26 -36 C-58 -28 -90 -10 -116 10 C-126 -4 -140 -18 -156 -22 C-150 -12 -142 0 -134 10 C-142 16 -150 30 -156 40 C-138 36 -126 28 -116 18 C-84 36 -40 46 6 42 C40 38 70 28 88 14 C96 12 104 12 110 8 Z",
     fin: "M-14 -38 C-6 -62 10 -76 26 -78 C20 -64 22 -50 30 -38 Z",
     flip: "M44 28 C58 48 52 64 34 74 C36 58 30 44 22 36 Z"
   };
-  function ridge(seed, w, base, amp, rough, prof) {
-    var r = rng(seed), n = 256, p = new Array(n + 1);
-    p[0] = r() * .5; p[n] = r() * .5;
-    (function split(a, b, off) {
-      if (b - a < 2) return;
-      var m = (a + b) >> 1; p[m] = (p[a] + p[b]) / 2 + (r() - .5) * off;
-      split(a, m, off * rough); split(m, b, off * rough);
-    })(0, n, 1);
-    var mn = Math.min.apply(null, p), mx = Math.max.apply(null, p), d = "M0 1200 L0 " + base;
-    for (var i = 0; i < p.length; i++) {
-      var k = i / n, f = prof ? prof(k) : 1;
-      d += " L" + (k * w).toFixed(1) + " " + (base - ((p[i] - mn) / (mx - mn)) * amp * f).toFixed(1);
-    }
-    return d + " L" + w + " 1200 Z";
+  function deform(d, A, ph) {
+    return d.replace(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g, function (m, xs, ys) {
+      var x = +xs, y = +ys, w = Math.max(0, (50 - x) / 200);
+      return x.toFixed(1) + " " + (y + A * Math.pow(w, 1.4) * Math.sin(ph)).toFixed(1);
+    });
   }
+  function makeDolphins(parent, n) {
+    var list = [];
+    for (var i = 0; i < n; i++) {
+      var g = S("g", {}, parent), wake = S("path", { fill: "none", stroke: "#ffe0b8", "stroke-width": 2.4, "stroke-linecap": "round" }, g);
+      var rA = S("ellipse", { fill: "none", stroke: "#ffe3c0", "stroke-width": 3 }, g), rB = S("ellipse", { fill: "none", stroke: "#ffe3c0", "stroke-width": 3 }, g);
+      var drops = []; for (var d = 0; d < 10; d++) drops.push(S("circle", { r: 3.6, fill: "#ffeccf" }, g));
+      var dg = S("g", {}, g), bd = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2.2, "stroke-linejoin": "round" }, dg);
+      var fn = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, "stroke-linejoin": "round" }, dg);
+      var fl = S("path", { fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, "stroke-linejoin": "round" }, dg);
+      var eye = S("circle", { cx: 82, cy: -3, r: 2.6, fill: "#ffd9a8" }, dg);
+      list.push({ i: i, P: 3.6 + i * .9, off: i * 1.7, g: g, dg: dg, bd: bd, fn: fn, fl: fl, wake: wake, rA: rA, rB: rB, drops: drops, fin: S("path", { d: DOLPHIN.fin, fill: "#0a0e35", stroke: "#ffb98a", "stroke-width": 2, transform: "scale(.5)", opacity: 0 }, g) });
+    }
+    return list;
+  }
+  function stepDolphins(list, time, hy, W) {
+    list.forEach(function (D) {
+      var x = time + D.off, c = Math.floor(x / D.P), u = (x - c * D.P) / D.P, r = rng(c * 977 + D.i * 131 + 7);
+      var dir = r() < .5 ? -1 : 1, x0 = 260 + r() * 1080, dx = dir * (320 + r() * 260), hgt = 110 + r() * 100, ys = hy + 85 + r() * 110;
+      var sz = .36 + (ys - hy - 60) / 420;
+      var jump = u < .46, j = u / .46, tail = Math.sin(time * 7 + D.i);
+      D.rA.setAttribute("opacity", 0); D.rB.setAttribute("opacity", 0);
+      D.drops.forEach(function (dp) { dp.setAttribute("opacity", 0); });
+      if (jump) {
+        var px_ = x0 + dx * j, arc = 4 * j * (1 - j), py_ = ys - hgt * arc, vx = dx, vy = -hgt * 4 * (1 - 2 * j);
+        var ang = Math.atan2(vy, Math.abs(vx)) * 180 / Math.PI, bend = 22 * (1 - arc) + 10 * tail;
+        D.bd.setAttribute("d", deform(DOLPHIN.body, bend, 1.57)); D.fn.setAttribute("d", deform(DOLPHIN.fin, bend, 1.57)); D.fl.setAttribute("d", deform(DOLPHIN.flip, bend, 1.57));
+        D.dg.setAttribute("transform", "translate(" + px_.toFixed(1) + "," + py_.toFixed(1) + ") scale(" + dir + ",1) rotate(" + ang.toFixed(1) + ") scale(" + sz.toFixed(2) + ")");
+        D.dg.style.opacity = 1; D.fin.setAttribute("opacity", 0); D.wake.setAttribute("opacity", 0);
+        /* giriş / çıkış sıçraması */
+        [[x0, 0, .18, 1], [x0 + dx, .88, 1, -1]].forEach(function (R, k) {
+          var kk = clamp((j - R[1]) / (R[2] - R[1]), 0, 1), on = j >= R[1] - .02 && j <= R[2] + .12, ring = k ? D.rB : D.rA;
+          ring.setAttribute("cx", R[0]); ring.setAttribute("cy", ys + 6); ring.setAttribute("rx", (24 + 160 * kk) * sz); ring.setAttribute("ry", (6 + 28 * kk) * sz); ring.setAttribute("opacity", on ? (1 - kk).toFixed(2) : 0);
+        });
+        D.drops.forEach(function (dp, q) {
+          var ex = q % 2 === 0, b0 = ex ? 0 : .86, kk = (j - b0) / .24; if (kk < 0 || kk > 1) return;
+          var an = (q / 10) * 3.14 + .2, sp = 60 + (q * 23) % 70, bx = ex ? x0 : x0 + dx;
+          dp.setAttribute("cx", (bx + Math.cos(an) * sp * kk * (ex ? 1 : -1) * sz).toFixed(1)); dp.setAttribute("cy", (ys - Math.sin(an) * sp * 1.3 * kk * sz + 240 * kk * kk * sz).toFixed(1));
+          dp.setAttribute("opacity", (1 - kk).toFixed(2));
+        });
+      } else {
+        /* su altında yüzüş: sırt yüzgeci yüzeyi keser, arkasında iz bırakır */
+        var k2 = (u - .46) / .54, fx = x0 + dx + dir * 150 * k2, fy = ys + 4 + Math.sin(k2 * 12) * 2, a = Math.sin(k2 * Math.PI);
+        D.dg.style.opacity = 0;
+        D.fin.setAttribute("transform", "translate(" + fx.toFixed(1) + "," + (fy + 10).toFixed(1) + ") scale(" + (dir * sz * .55).toFixed(2) + "," + (sz * .55).toFixed(2) + ")");
+        D.fin.setAttribute("opacity", a.toFixed(2));
+        var wl = 90 * sz;
+        D.wake.setAttribute("d", "M" + fx.toFixed(1) + " " + (fy + 12).toFixed(1) + " l" + (-dir * wl) + " " + (-8 * sz) + " M" + fx.toFixed(1) + " " + (fy + 12).toFixed(1) + " l" + (-dir * wl) + " " + (10 * sz));
+        D.wake.setAttribute("opacity", (a * .7).toFixed(2));
+      }
+    });
+  }
+
+  /* =========================================================
+     1) GÖL / OKYANUS (kapaktaki sahne) + yunuslar
+     ========================================================= */
   var OCEAN = addScene("ocean", "UFUK", 0.09, 0.255, function (sc, el) {
-    var sA = svg(el), dA = S("defs", {}, sA);
-    grad(dA, "oSky", [[0, "#050929"], [.55, "#2b1b6c"], [.86, "#b84c8c"], [1, "#ffa066"]]);
-    rgrad(dA, "oGlow", [[0, "#ffb070", .85], [.35, "#ff6f6f", .35], [1, "#8b5cf6", 0]]);
-    S("rect", { width: 1600, height: 570, fill: "url(#oSky)" }, sA);
-    var r = rng(7), stars = S("g", {}, sA);
-    for (var i = 0; i < 70; i++) S("circle", { cx: r() * 1600, cy: r() * 330, r: r() * 1.5 + .4, fill: "#fff", opacity: r() * .8 + .2 }, stars);
-    S("circle", { cx: 800, cy: 560, r: 480, fill: "url(#oGlow)" }, sA);
-    S("circle", { cx: 800, cy: 560, r: 74, fill: "#ffe8b8" }, sA);
-    /* bulutlar */
-    var sCloud = svg(el, true), dC = S("defs", {}, sCloud); sc.cloudSvg = sCloud;
-    var blur = S("filter", { id: "oBlur", x: "-30%", y: "-30%", width: "160%", height: "160%" }, dC); S("feGaussianBlur", { stdDeviation: 22 }, blur);
-    sc.clouds = S("g", { filter: "url(#oBlur)" }, sCloud);
-    [[260, 300, 260, 34, .22], [1250, 250, 300, 38, .2], [800, 380, 360, 30, .16], [1450, 420, 220, 26, .22]].forEach(function (c) {
-      S("ellipse", { cx: c[0], cy: c[1], rx: c[2], ry: c[3], fill: "#ff9fd0", opacity: c[4] }, sc.clouds);
-    });
-    /* ufuktaki karlı dağlar (ortada vadi, güneş vadiden doğuyor) */
-    var sM = svg(el, true), dM = S("defs", {}, sM); sc.mSvg = sM; sM.style.willChange = "transform";
-    var layers = [{ seed: 5, amp: 230, base: 574, rough: .55, prof: function (k) { return .1 + .9 * Math.pow(Math.abs(k - .5) * 2, .85); }, snow: "#ffffff", c: ["#a08ae0", "#6a56b8"] },
-                  { seed: 17, amp: 190, base: 580, rough: .56, prof: function (k) { return .06 + .94 * Math.pow(Math.abs(k - .5) * 2, 1.1); }, snow: "#dcd4ff", c: ["#6a58b8", "#3b2f86"] },
-                  { seed: 29, amp: 140, base: 588, rough: .58, prof: function (k) { return .02 + .98 * Math.pow(Math.abs(k - .5) * 2, 1.4); }, snow: "#8d92ee", c: ["#31297a", "#161344"] }];
-    layers.forEach(function (L, i) {
-      var g = S("linearGradient", { id: "oM" + i, gradientUnits: "userSpaceOnUse", x1: 0, x2: 0, y1: L.base - L.amp, y2: L.base + 20 }, dM);
-      [[0, L.snow], [.14, L.snow], [.4, L.c[0]], [1, L.c[1]]].forEach(function (st) { S("stop", { offset: st[0], "stop-color": st[1] }, g); });
-      S("path", { d: ridge(L.seed, 1700, L.base, L.amp, L.rough, L.prof), fill: "url(#oM" + i + ")", transform: "translate(-50,0)" }, sM);
-    });
-    /* deniz + güneş yolu */
-    var sB = svg(el), dB = S("defs", {}, sB);
-    grad(dB, "oSea", [[0, "#34307f"], [.25, "#171a5a"], [1, "#050720"]]);
-    grad(dB, "oRefl", [[0, "#ffd9a0", .95], [.5, "#ff9a5e", .45], [1, "#ff7a4d", 0]]);
-    S("rect", { y: 586, width: 1600, height: 314, fill: "url(#oSea)" }, sB);
-    S("polygon", { points: "770,586 830,586 1080,900 520,900", fill: "url(#oRefl)", opacity: .75 }, sB);
-    /* dalgalar */
-    var sWave = svg(el), wd = S("defs", {}, sWave);
-    grad(wd, "oWave", [[0, "#5a6fe0", .35], [.5, "#ffd7a0", 1], [1, "#5a6fe0", .35]], 1, 0, { gradientUnits: "userSpaceOnUse", x1: 0, x2: 1600, y1: 0, y2: 0 });
+    sc.T = buildTour(el);
     sc.waves = [];
-    for (var w = 0; w < 18; w++) sc.waves.push(S("path", { fill: "none", stroke: "url(#oWave)", "stroke-linecap": "round" }, sWave));
-    /* ön plan kayalıklar */
-    var sR = svg(el, true); sc.rSvg = sR; sR.style.willChange = "transform";
-    S("path", { d: "M-40 900 L-40 700 L30 690 L70 724 L130 740 L176 790 L250 806 L300 860 L360 900 Z", fill: "#060820", stroke: "#ffa87a", "stroke-opacity": .55, "stroke-width": 2 }, sR);
-    S("path", { d: "M1640 900 L1640 680 L1580 690 L1540 730 L1480 742 L1420 800 L1350 812 L1300 870 L1260 900 Z", fill: "#060820", stroke: "#ffa87a", "stroke-opacity": .55, "stroke-width": 2 }, sR);
-    /* yunuslar */
-    var sDol = svg(el);
-    sc.dol = [];
-    [{ x0: 250, x1: 640, y: 660, h: 250, sc: .95, a: .16, b: .42 },
-     { x0: 760, x1: 1210, y: 700, h: 330, sc: 1.3, a: .36, b: .68 },
-     { x0: 1130, x1: 1500, y: 640, h: 220, sc: .8, a: .62, b: .9 }].forEach(function (c) {
-      var g = S("g", {}, sDol), splash = S("g", {}, sDol);
-      var ringA = S("ellipse", { fill: "none", stroke: "#ffe0b8", "stroke-width": 3 }, splash);
-      var ringB = S("ellipse", { fill: "none", stroke: "#ffe0b8", "stroke-width": 3 }, splash);
-      var drops = []; for (var d = 0; d < 9; d++) drops.push(S("circle", { r: 4, fill: "#ffe8c8" }, splash));
-      var dg = S("g", {}, g);
-      ["body", "fin", "flip"].forEach(function (k) { S("path", { d: DOLPHIN[k], fill: "#0a0e35", stroke: "#ffb07a", "stroke-width": 2.2, "stroke-linejoin": "round" }, dg); });
-      S("circle", { cx: 82, cy: -3, r: 2.6, fill: "#ffd9a8" }, dg);
-      S("path", { d: "M110 8 C98 14 90 14 82 12", fill: "none", stroke: "#ffb07a", "stroke-width": 1.4, opacity: .8 }, dg);
-      sc.dol.push({ c: c, g: g, ringA: ringA, ringB: ringB, drops: drops });
-    });
+    for (var w = 0; w < 14; w++) sc.waves.push(S("path", { fill: "none", stroke: "#ffd6b0", "stroke-linecap": "round" }, sc.T.waveSvg));
+    var sD = svg(el); sc.dol = makeDolphins(sD, 4);
+    sc.rocks = H("tour-layer tl-rocks", "", el); setMask(sc.rocks, MASKS.rocks[0], true);
     sc.cap = caption(el, "UFUK", "Ufkun ötesine", "Her büyük fikir, ufuk çizgisinin ötesine bakmakla başlar.", "cap-bottom");
   });
   OCEAN.update = function (t, time) {
-    var sc = OCEAN;
-    sc.cloudSvg.style.transform = "translate3d(" + (-t * 180 * K) + "px," + (-smooth(.7, 1, t) * 120 * K) + "px,0)";
-    sc.mSvg.style.transformOrigin = px(800) + "px " + py(580) + "px";
-    sc.mSvg.style.transform = "scale(" + (1 + t * .22).toFixed(3) + ")";
-    sc.rSvg.style.transformOrigin = px(800) + "px " + py(900) + "px";
-    sc.rSvg.style.transform = "scale(" + (1 + t * .35).toFixed(3) + ")";
-    var cam = t * 3.2 + time * .05;
+    var sc = OCEAN, T = sc.T;
+    placeTour(T);
+    if (sc.rocks.style.width !== T.L.lake.style.width) { ["width", "height", "left", "top", "transformOrigin"].forEach(function (k) { sc.rocks.style[k] = T.L.lake.style[k]; }); }
+    var z = { sides: lerp(1, 1.15, t), mount: lerp(1, 1.35, t), lake: lerp(1, 1.7, t) };
+    camTour(T, z); T.warm.style.opacity = "0";
+    sc.rocks.style.transform = "translate3d(0," + (t * 160) + "px,0) scale(" + lerp(1, 2.3, t).toFixed(3) + ")";
+    T.glow.style.opacity = (.7 + .15 * Math.sin(time * 1.3)).toFixed(2);
+    var hy = 450 + (VH * .6 - VH / 2) / K;
+    var cam = t * 3.2 + time * .06;
     for (var i = 0; i < sc.waves.length; i++) {
       var u = ((i / sc.waves.length) + cam) % 1; if (u < 0) u += 1;
-      var y = 586 + 330 * Math.pow(u, 2.1);
-      var amp = 2 + 30 * u * u, wl = 80 + 300 * u, ph = i * 1.9 + time * (.4 + u);
+      var y = hy + 44 + 300 * Math.pow(u, 2.1), amp = 2 + 22 * u * u, wl = 80 + 300 * u, ph = i * 1.9 + time * (.4 + u);
       var d = "M-60 " + y.toFixed(1);
       for (var x = -60; x <= 1700; x += 40) d += " L" + x + " " + (y + amp * Math.sin(x / wl * 6.283 + ph)).toFixed(1);
-      sc.waves[i].setAttribute("d", d);
-      sc.waves[i].setAttribute("stroke-width", (.7 + 3.4 * u).toFixed(2));
-      sc.waves[i].setAttribute("opacity", Math.min(1, u * 4).toFixed(2));
+      sc.waves[i].setAttribute("d", d); sc.waves[i].setAttribute("stroke-width", (.5 + 2.2 * u).toFixed(2)); sc.waves[i].setAttribute("opacity", (Math.min(1, u * 4) * .22).toFixed(2));
     }
-    sc.dol.forEach(function (D) {
-      var c = D.c, u = (t - c.a) / (c.b - c.a), vis = u > -.05 && u < 1.12;
-      D.g.style.display = vis ? "" : "none";
-      if (u >= 0 && u <= 1) {
-        var x = lerp(c.x0, c.x1, u), arc = 4 * u * (1 - u), y = c.y - c.h * arc;
-        var dx = c.x1 - c.x0, dy = -c.h * 4 * (1 - 2 * u);
-        D.g.setAttribute("transform", "translate(" + x.toFixed(1) + "," + y.toFixed(1) + ") rotate(" + (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(1) + ") scale(" + c.sc + ")");
-        D.g.style.opacity = 1;
-      } else D.g.style.opacity = 0;
-      [[D.ringA, c.x0, -.02, .28], [D.ringB, c.x1, .96, 1.16]].forEach(function (R) {
-        var k = clamp((u - R[2]) / (R[3] - R[2]), 0, 1), on = u > R[2] && u < R[3] + .05;
-        R[0].setAttribute("cx", R[1]); R[0].setAttribute("cy", c.y + 6);
-        R[0].setAttribute("rx", (20 + 150 * k) * c.sc); R[0].setAttribute("ry", (5 + 26 * k) * c.sc);
-        R[0].setAttribute("opacity", on ? (1 - k).toFixed(2) : 0);
-      });
-      D.drops.forEach(function (dp, i) {
-        var exit = i % 2 === 0, base = exit ? -.02 : .94, k = (u - base) / .24;
-        if (k < 0 || k > 1) { dp.setAttribute("opacity", 0); return; }
-        var ang = (i / 9) * 3.14 + .2, sp = 70 + (i * 23) % 70;
-        dp.setAttribute("cx", ((exit ? c.x0 : c.x1) + Math.cos(ang) * sp * k * (exit ? 1 : -1) * c.sc).toFixed(1));
-        dp.setAttribute("cy", (c.y - Math.sin(ang) * sp * 1.3 * k * c.sc + 260 * k * k * c.sc).toFixed(1));
-        dp.setAttribute("opacity", (1 - k).toFixed(2)); dp.setAttribute("r", (4 * (1 - k * .5) * c.sc).toFixed(1));
-      });
-    });
+    stepDolphins(sc.dol, time, hy, 1600);
     sc.cap.style.opacity = (smooth(0, .1, t) * (1 - smooth(.7, .92, t))).toFixed(3);
   };
 
@@ -203,10 +226,10 @@
     return o;
   }
   var PLANETS = [
-    { n: "Merkür", R: 74, r: 4.6, c: "#b9b2a8", a: 1.2, om: 4.2 }, { n: "Venüs", R: 112, r: 7.4, c: "#efcf86", a: 4.1, om: 3.1 },
-    { n: "Dünya", R: 158, r: 8.2, c: "#3f8cff", a: 2.4, om: 2.5, moon: true }, { n: "Mars", R: 206, r: 5.8, c: "#ff6a4a", a: 5.5, om: 2.0 },
-    { n: "Jüpiter", R: 300, r: 19, c: "#dba36a", a: .5, om: 1.2 }, { n: "Satürn", R: 392, r: 15, c: "#f1d9a2", a: 3.3, om: .95, ring: true },
-    { n: "Uranüs", R: 478, r: 10.5, c: "#8eeeff", a: 5.9, om: .7 }, { n: "Neptün", R: 556, r: 10, c: "#5f72ff", a: 1.9, om: .55 }
+    { n: "Umut", R: 74, r: 4.6, c: "#b9b2a8", a: 1.2, om: 4.2 }, { n: "Azim", R: 112, r: 7.4, c: "#efcf86", a: 4.1, om: 3.1 },
+    { n: "Hayal", R: 158, r: 8.2, c: "#3f8cff", a: 2.4, om: 2.5, moon: true }, { n: "Cesaret", R: 206, r: 5.8, c: "#ff6a4a", a: 5.5, om: 2.0 },
+    { n: "Vizyon", R: 300, r: 19, c: "#dba36a", a: .5, om: 1.2 }, { n: "Sabır", R: 392, r: 15, c: "#f1d9a2", a: 3.3, om: .95, ring: true },
+    { n: "İnanç", R: 478, r: 10.5, c: "#8eeeff", a: 5.9, om: .7 }, { n: "Başarı", R: 556, r: 10, c: "#5f72ff", a: 1.9, om: .55 }
   ];
   var SPACE = addScene("space", "EVREN", 0.24, 0.40, function (sc, el) {
     sc.cv = document.createElement("canvas"); sc.cv.className = "hs-canvas"; el.appendChild(sc.cv); sc.ctx = sc.cv.getContext("2d");
@@ -219,7 +242,7 @@
     [[200, 780, 420, 90], [700, 840, 520, 100], [1250, 790, 440, 90], [-20, 900, 380, 120], [1620, 900, 380, 120], [820, 700, 360, 70]].forEach(function (c, i) {
       S("ellipse", { cx: c[0], cy: c[1], rx: c[2], ry: c[3], fill: i % 2 ? "#ffb7d9" : "#d9c9ff", opacity: .85 }, cg);
     });
-    sc.cap = caption(el, "EVREN", "Bulutların ötesinde", "Güneş sistemi, yıldızlar, evren: vizyonumuz gökyüzüyle sınırlı değil.", "cap-bottom");
+    sc.cap = caption(el, "EVREN", "Bulutların ötesinde", "Umut, azim, cesaret… Vizyonumuz gökyüzüyle sınırlı değil.", "cap-bottom");
   });
   SPACE.update = function (t, time) {
     var sc = SPACE, cv = sc.cv, ctx = sc.ctx, dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -290,6 +313,7 @@
       ctx.fillStyle = gl; ctx.beginPath(); ctx.arc(0, 0, 150 * sk, 0, 6.283); ctx.fill();
       ctx.fillStyle = "#fff4cf"; ctx.beginPath(); ctx.arc(0, 0, 26 * sk, 0, 6.283); ctx.fill();
       pos.filter(function (o) { return !o.back; }).forEach(planet);
+      if (sy > .92) { ctx.fillStyle = "rgba(255,235,190," + ((sy - .92) / .08 * .9).toFixed(2) + ")"; ctx.font = "700 " + Math.max(12, 13 * sk) + "px Manrope, sans-serif"; ctx.textAlign = "center"; ctx.fillText("Tutku", 0, 40 * sk + 12); }
       ctx.restore();
     }
     sc.cloudSvg.style.transform = "translate3d(0," + (-smooth(0, .3, t) * VH * 1.35) + "px,0)";
@@ -297,39 +321,13 @@
     sc.cap.style.opacity = (smooth(.42, .58, t) * (1 - smooth(.86, 1, t))).toFixed(3);
   };
 
+
   /* =========================================================
-     3) DAĞLAR  (bulutların arasından iniş)
+     3) DAĞLAR: kapaktaki zirvelerin arasından geçiş (bulutlardan iniş)
      ========================================================= */
   var MOUNT = addScene("mountains", "ZİRVE", 0.385, 0.52, function (sc, el) {
-    var s = svg(el), defs = S("defs", {}, s);
-    grad(defs, "mSky", [[0, "#060a2b"], [.5, "#2c1d70"], [.82, "#a4468f"], [1, "#ff9468"]]);
-    rgrad(defs, "mGlow", [[0, "#ffc58a", .9], [.4, "#ff7a8a", .35], [1, "#7c4dff", 0]]);
-    S("rect", { width: 1600, height: 900, fill: "url(#mSky)" }, s);
-    var r = rng(11), stars = S("g", {}, s);
-    for (var i = 0; i < 80; i++) S("circle", { cx: r() * 1600, cy: r() * 360, r: r() * 1.4 + .3, fill: "#fff", opacity: r() * .7 + .2 }, stars);
-    sc.glowSvg = svg(el);
-    var gd = S("defs", {}, sc.glowSvg); rgrad(gd, "mGlow2", [[0, "#ffc58a", .9], [.4, "#ff7a8a", .35], [1, "#7c4dff", 0]]);
-    S("circle", { cx: 800, cy: 640, r: 560, fill: "url(#mGlow2)" }, sc.glowSvg);
-    var cfg = [{ base: 640, amp: 190, rough: .52, seed: 3, shift: 160, grow: .06, snow: "#ffffff", c: ["#9a8cf0", "#6a5cc4"] },
-               { base: 700, amp: 250, rough: .54, seed: 8, shift: 330, grow: .14, snow: "#ece8ff", c: ["#7c6cd6", "#4c3fa0"] },
-               { base: 780, amp: 320, rough: .55, seed: 21, shift: 560, grow: .26, snow: "#b9bfff", c: ["#51459f", "#2b2370"] },
-               { base: 860, amp: 380, rough: .56, seed: 34, shift: 880, grow: .42, snow: "#7d88e8", c: ["#2c2676", "#141242"] },
-               { base: 940, amp: 420, rough: .58, seed: 55, shift: 1300, grow: .7, snow: "#4a52b8", c: ["#14123e", "#070920"] }];
-    sc.layers = [];
-    cfg.forEach(function (c, i) {
-      var ls = svg(el, true), ld = S("defs", {}, ls);
-      var g = S("linearGradient", { id: "mC" + i, gradientUnits: "userSpaceOnUse", x1: 0, x2: 0, y1: c.base - c.amp, y2: c.base + 80 }, ld);
-      [[0, c.snow], [.1, c.snow], [.3, c.c[0]], [1, c.c[1]]].forEach(function (st) { S("stop", { offset: st[0], "stop-color": st[1] }, g); });
-      S("path", { d: ridge(c.seed, 3000, c.base, c.amp, c.rough), fill: "url(#mC" + i + ")", transform: "translate(-700,0)" }, ls);
-      ls.style.willChange = "transform";
-      sc.layers.push({ g: ls, c: c });
-    });
-    var ms = svg(el, true), md = S("defs", {}, ms);
-    var bf = S("filter", { id: "oBlurM", x: "-10%", y: "-100%", width: "120%", height: "300%" }, md); S("feGaussianBlur", { stdDeviation: 28 }, bf);
-    sc.mist = [];
-    for (var m = 0; m < 3; m++) sc.mist.push(S("rect", { x: -200, y: 520 + m * 90, width: 2000, height: 120, fill: "#ffd0e8", opacity: .08 + m * .02, filter: "url(#oBlurM)" }, ms));
-    sc.mistSvg = ms; ms.style.willChange = "transform";
-    /* iniş: bulutlar yukarı çekilir */
+    sc.T = buildTour(el);
+    sc.rocks = H("tour-layer tl-rocks", "", el); setMask(sc.rocks, MASKS.rocks[0], true);
     var cs = svg(el, true), cd = S("defs", {}, cs); sc.cloudSvg = cs;
     var cf = S("filter", { id: "mBlurC", x: "-30%", y: "-30%", width: "160%", height: "160%" }, cd); S("feGaussianBlur", { stdDeviation: 36 }, cf);
     var cg = S("g", { filter: "url(#mBlurC)" }, cs);
@@ -339,15 +337,16 @@
     sc.cap = caption(el, "ZİRVE", "Zirvelerden geç", "Her zirve, bir öncekinin üzerine inşa edilir.", "cap-bottom");
   });
   MOUNT.update = function (t, time) {
-    var sc = MOUNT, rise = 1 - smooth(0, .16, t);
-    sc.glowSvg.style.transform = "translate3d(0," + (t * 120 * K) + "px,0)";
-    sc.glowSvg.style.opacity = (1 - t * .7).toFixed(2);
-    sc.layers.forEach(function (L, i) {
-      var c = L.c, sx = -t * c.shift * (i % 2 ? 1 : -1), sy = rise * (260 + i * 90), scl = 1 + t * c.grow;
-      L.g.style.transformOrigin = px(800) + "px " + py(860) + "px";
-      L.g.style.transform = "translate3d(" + (sx * K).toFixed(1) + "px," + (sy * K).toFixed(1) + "px,0) scale(" + scl.toFixed(3) + ")";
-    });
-    sc.mistSvg.style.transform = "translate3d(" + (-t * 300 * K) + "px,0,0)";
+    var sc = MOUNT, T = sc.T;
+    placeTour(T);
+    if (sc.rocks.style.width !== T.L.lake.style.width) { ["width", "height", "left", "top", "transformOrigin"].forEach(function (k) { sc.rocks.style[k] = T.L.lake.style[k]; }); }
+    var e = smooth(0, 1, t);
+    camTour(T, { sides: lerp(1.15, 2.1, e), mount: lerp(1.35, 3.4, e), lake: lerp(1.7, 5, e) });
+    sc.rocks.style.transform = "translate3d(0," + lerp(160, 700, e) + "px,0) scale(" + lerp(2.3, 5.5, e).toFixed(3) + ")";
+    T.warm.style.opacity = smooth(0, .8, t).toFixed(2);
+    T.glow.style.opacity = (.7 + .3 * smooth(.3, 1, t)).toFixed(2);
+    T.glow.style.transform = "scale(" + (1 + t * .9).toFixed(2) + ")";
+    T.waveSvg.style.opacity = "0";
     var ce = smooth(0, .3, t);
     sc.cloudSvg.style.transform = "translate3d(0," + (-ce * VH * 1.3) + "px,0)";
     sc.cloudSvg.style.opacity = (1 - smooth(.15, .3, t)).toFixed(3);
@@ -355,9 +354,9 @@
   };
 
   /* =========================================================
-     4) ÇİFT BAŞLI ANADOLU KARTALI  (Selçuklu ruhu: asil, süzülen, kanat çırpan)
+     4) ÇİFT BAŞLI ANADOLU KARTALI  (Selçuklu esinli, asil; kanatlar dirsek ve bilekten kırılıp açılır)
      ========================================================= */
-  var PIV = [-40, 128];
+  var SH = [-34, 126], WR = [-109, 43];
   function leaf(bx, by, ang, len, w, bend) {
     var dx = Math.cos(ang), dy = Math.sin(ang), nx = -dy, ny = dx, bd = (bend === undefined ? .05 : bend) * len;
     var x1 = bx + dx * len * .35, y1 = by + dy * len * .35, x2 = bx + dx * len * .8, y2 = by + dy * len * .8, tx = bx + dx * len, ty = by + dy * len;
@@ -367,30 +366,33 @@
       " C" + f(x2 - nx * w * .55 + nx * bd) + " " + f(y2 - ny * w * .55 + ny * bd) + " " + f(x1 - nx * w * .85 + nx * bd) + " " + f(y1 - ny * w * .85 + ny * bd) + " " + f(bx - nx * w * .5) + " " + f(by - ny * w * .5) + " Z";
   }
   function buildWing(g) {
-    var wing = { prim: [], base: [] }, n = 10, L = [200, 226, 248, 264, 276, 280, 272, 254, 230, 200];
-    var grp = S("g", {}, g);
+    var arm = S("g", {}, g), hand = S("g", {}, arm), wing = { arm: arm, hand: hand, prim: [], sec: [] };
+    var n = 10, L = [190, 212, 230, 244, 252, 254, 246, 230, 208, 184];
     for (var i = 0; i < n; i++) {
-      var a = (-116 - i * (74 / (n - 1))) * Math.PI / 180, bx = PIV[0] + Math.cos(a) * 14, by = PIV[1] + Math.sin(a) * 14;
-      var fg = S("g", {}, grp);
+      var a = (-108 - i * (78 / (n - 1))) * Math.PI / 180, bx = WR[0] + Math.cos(a) * 10, by = WR[1] + Math.sin(a) * 10;
+      var fg = S("g", {}, hand);
       S("path", { d: leaf(bx, by, a, L[i], 25 - i * .7), fill: "url(#eF)", stroke: "url(#eS)", "stroke-width": 2.6, "stroke-linejoin": "round" }, fg);
       S("path", { d: "M" + bx.toFixed(1) + " " + by.toFixed(1) + " L" + (bx + Math.cos(a) * L[i] * .93).toFixed(1) + " " + (by + Math.sin(a) * L[i] * .93).toFixed(1), fill: "none", stroke: "#c9fff5", "stroke-opacity": .55, "stroke-width": 1.4 }, fg);
       wing.prim.push(fg);
     }
-    [{ m: 8, L: 118, w: 38, off: 30, a0: -120, a1: -178, fill: "eC" }, { m: 7, L: 78, w: 32, off: 16, a0: -126, a1: -172, fill: "eD" }].forEach(function (row) {
-      var rg = S("g", {}, grp);
-      for (var k = 0; k < row.m; k++) {
-        var a = (row.a0 + (row.a1 - row.a0) * k / (row.m - 1)) * Math.PI / 180, bx = PIV[0] + Math.cos(a) * row.off, by = PIV[1] + Math.sin(a) * row.off;
-        S("path", { d: leaf(bx, by, a, row.L * (1 - Math.abs(k - row.m / 2) * .02), row.w, .03), fill: "url(#" + row.fill + ")", stroke: "url(#eS)", "stroke-width": 2.2, "stroke-linejoin": "round" }, rg);
-      }
-      wing.base.push(rg);
-    });
-    S("path", { d: "M-30 160 C-18 112 -50 82 -100 80 C-72 104 -66 142 -46 182 Z", fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 2.4, "stroke-linejoin": "round" }, grp);
+    var m = 8, L2 = [96, 108, 116, 120, 118, 112, 102, 92];
+    var sec = S("g", {}, arm);
+    for (var k = 0; k < m; k++) {
+      var tt = (k + .5) / m, a2 = (-196 + k * (46 / (m - 1))) * Math.PI / 180;
+      var b2 = [lerp(SH[0], WR[0], tt), lerp(SH[1], WR[1], tt)], fg2 = S("g", {}, sec);
+      S("path", { d: leaf(b2[0], b2[1], a2, L2[k], 34, .03), fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 2.2, "stroke-linejoin": "round" }, fg2);
+      S("path", { d: leaf(b2[0], b2[1], a2, L2[k] * .55, 30, .03), fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 1.8, "stroke-linejoin": "round" }, fg2);
+      wing.sec.push(fg2);
+    }
+    S("path", { d: "M" + SH[0] + " " + SH[1] + " L" + WR[0] + " " + WR[1], fill: "none", stroke: "url(#eS)", "stroke-width": 27, "stroke-linecap": "round" }, arm);
+    S("path", { d: "M" + SH[0] + " " + SH[1] + " L" + WR[0] + " " + WR[1], fill: "none", stroke: "url(#eD)", "stroke-width": 22, "stroke-linecap": "round" }, arm);
+    S("circle", { cx: WR[0], cy: WR[1], r: 7, fill: "url(#eG)" }, arm);
     return wing;
   }
   function buildHead(g) {
-    var head = S("g", {}, g), hi = S("g", { transform: "translate(-6,-34)" }, head);
-    S("path", { d: "M-10 96 L-32 106 C-30 126 -26 144 -18 160 L2 160 L2 120 Z", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, hi);
-    head = hi;
+    var neck = S("g", {}, g);
+    S("path", { d: "M-10 96 L-32 106 C-30 126 -26 144 -18 160 L2 160 L2 120 Z", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, neck);
+    var head = S("g", {}, neck);
     S("path", { d: "M-46 28 L-40 6 L-34 26 M-38 30 L-30 10 L-26 32", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 2, "stroke-linejoin": "round" }, head);
     S("path", { d: "M-8 96 C-18 82 -26 66 -30 54 C-32 44 -34 34 -42 28 C-50 22 -62 20 -72 24 C-76 26 -80 30 -84 34 C-96 36 -108 44 -110 58 C-110 66 -106 72 -100 72 C-100 64 -96 58 -88 56 L-76 54 C-70 58 -62 62 -58 68 C-50 78 -40 90 -30 104 Z", fill: "url(#eC)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, head);
     S("path", { d: "M-84 34 C-96 36 -108 44 -110 58 C-110 66 -106 72 -100 72 C-100 64 -96 58 -88 56 L-76 54 Z", fill: "url(#eG)", stroke: "#fff3c4", "stroke-width": 1.5, "stroke-linejoin": "round" }, head);
@@ -398,7 +400,7 @@
     S("circle", { cx: -64, cy: 40, r: 4.2, fill: "#fff3c4" }, head);
     S("circle", { cx: -65, cy: 40, r: 1.9, fill: "#02103a" }, head);
     S("path", { d: "M-34 50 C-40 62 -42 76 -38 90 M-46 56 C-50 66 -50 78 -46 88 M-22 62 C-26 74 -26 86 -22 96", fill: "none", stroke: "#c9fff5", "stroke-opacity": .5, "stroke-width": 1.6 }, head);
-    return head;
+    return { neck: neck, head: head };
   }
   function buildLeg(g) {
     var leg = S("g", { fill: "none", stroke: "url(#eG)", "stroke-width": 6, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
@@ -426,16 +428,15 @@
     var L = S("g", {}, sc.eagle), R = S("g", { transform: "scale(-1,1)" }, sc.eagle);
     sc.wingL = buildWing(L); sc.wingR = buildWing(R);
     buildLeg(L); buildLeg(R);
-    /* kuyruk */
+    sc.tail = S("g", {}, sc.eagle);
     for (var k = -3; k <= 3; k++) {
       var a = Math.PI / 2 + k * .17, len = 96 + (3 - Math.abs(k)) * 9;
-      S("path", { d: leaf(0, 200, a, len, 24, 0), fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 2.4, "stroke-linejoin": "round" }, sc.eagle);
+      S("path", { d: leaf(0, 200, a, len, 24, 0), fill: "url(#eD)", stroke: "url(#eS)", "stroke-width": 2.4, "stroke-linejoin": "round" }, sc.tail);
     }
     var body = S("g", {}, sc.eagle);
     S("path", { d: "M-32 94 C-40 132 -28 172 -10 202 L0 222 L10 202 C28 172 40 132 32 94 C16 106 -16 106 -32 94 Z", fill: "url(#eB)", stroke: "url(#eS)", "stroke-width": 3, "stroke-linejoin": "round" }, body);
     for (var q = 0; q < 4; q++) S("path", { d: "M" + (-20 + q * 2) + " " + (114 + q * 20) + " L0 " + (128 + q * 20) + " L" + (20 - q * 2) + " " + (114 + q * 20), fill: "none", stroke: "#9ff5e6", "stroke-opacity": .75, "stroke-width": 2.2, "stroke-linecap": "round", "stroke-linejoin": "round" }, body);
-    sc.headL = buildHead(L); sc.headR = buildHead(R);
-    /* ay yıldız */
+    sc.hL = buildHead(L); sc.hR = buildHead(R);
     var em = S("g", {}, sc.eagle);
     S("path", { d: "M-19.96 -47.33 A24 24 0 1 0 19.96 -47.33 A20 20 0 1 1 -19.96 -47.33 Z", fill: "#5eead4", stroke: "#e6fffa", "stroke-width": 1.4 }, em);
     var star = ""; for (var v = 0; v < 10; v++) { var rr = v % 2 ? 5.4 : 13, an = -Math.PI / 2 + v * Math.PI / 5; star += (v ? "L" : "M") + (Math.cos(an) * rr).toFixed(1) + " " + (-80 + Math.sin(an) * rr).toFixed(1); }
@@ -444,26 +445,35 @@
   });
   EAGLE.update = function (t, time) {
     var sc = EAGLE, e = smooth(0, 1, t);
-    var scale = .12 + 2.35 * Math.pow(t, 2.25);
-    /* süzülüş: S çizen yol; yaklaştıkça merkeze oturur */
+    var scale = .12 + 2.2 * Math.pow(t, 2.25);
     var env = Math.pow(1 - t, 1.15);
     var xx = Math.sin(t * 5.4) * 300 * env;
-    var yy = 430 + (1 - e) * 130 - t * 36 + Math.sin(t * 8.5) * 16 * env;
-    var bank = Math.cos(t * 5.4) * 9 * env;
-    /* kanat çırpışı: süzülme ve çırpma dönüşümlü */
-    var g = .5 + .5 * Math.sin(t * 6.4 + .6), amp = .16 + .84 * smooth(.28, .72, g), ph = t * 46;
-    var bob = Math.cos(ph) * 7 * amp;
+    var g = .5 + .5 * Math.sin(t * 6.4 + .6), amp = .22 + .78 * smooth(.25, .7, g), ph = t * 40;
+    var sn = Math.sin(ph), cs = Math.cos(ph);
+    var yy = 430 + (1 - e) * 130 - t * 36 + Math.sin(t * 8.5) * 16 * env - sn * 10 * amp;
+    var bank = Math.cos(t * 5.4) * 9 * env + Math.sin(ph - .6) * 2 * amp;
     sc.eagleSvg.style.transformOrigin = px(800) + "px " + py(540) + "px";
-    sc.eagleSvg.style.transform = "translate3d(" + (xx * K).toFixed(1) + "px," + ((yy - 540 + bob * scale) * K).toFixed(1) + "px,0) rotate(" + bank.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
-    [sc.wingL, sc.wingR].forEach(function (w) {
+    sc.eagleSvg.style.transform = "translate3d(" + (xx * K).toFixed(1) + "px," + ((yy - 540) * K).toFixed(1) + "px,0) rotate(" + bank.toFixed(2) + "deg) scale(" + scale.toFixed(3) + ")";
+    /* kanat: omuz -> dirsek/bilek kırılması; yukarı vuruşta el katlanır, aşağı vuruşta açılır */
+    var alpha = lerp(-6, -28, amp) + 42 * amp * cs, beta = (sn > 0 ? 16 * sn : 54 * sn) * amp - 3 * (1 - amp);
+    [sc.wingL, sc.wingR].forEach(function (w, wi) {
+      var lag = wi ? .08 : 0;
+      w.arm.setAttribute("transform", "rotate(" + (alpha + 2 * Math.sin(time * 1.3 + wi)).toFixed(2) + " " + SH[0] + " " + SH[1] + ")");
+      w.hand.setAttribute("transform", "rotate(" + (beta + lag).toFixed(2) + " " + WR[0] + " " + WR[1] + ")");
       w.prim.forEach(function (fg, i) {
-        var lag = i * .24, rot = 21 * amp * Math.sin(ph - lag) * (.3 + .7 * i / 9) + (1 - amp) * 3;
-        fg.setAttribute("transform", "rotate(" + rot.toFixed(2) + " " + PIV[0] + " " + PIV[1] + ")");
+        var fl = (7 * amp * Math.sin(ph - i * .26 - .4) + 2 * Math.sin(time * 2 + i)) * (.3 + .7 * i / 9);
+        fg.setAttribute("transform", "rotate(" + fl.toFixed(2) + " " + WR[0] + " " + WR[1] + ")");
       });
-      w.base.forEach(function (rg, j) { rg.setAttribute("transform", "rotate(" + (9 * amp * Math.sin(ph - .5 - j * .2)).toFixed(2) + " " + PIV[0] + " " + PIV[1] + ")"); });
+      w.sec.forEach(function (fg, k) { fg.setAttribute("transform", "rotate(" + (4 * amp * Math.sin(ph - .8 - k * .2)).toFixed(2) + " " + (lerp(SH[0], WR[0], (k + .5) / 8)).toFixed(1) + " " + (lerp(SH[1], WR[1], (k + .5) / 8)).toFixed(1) + ")"); });
     });
-    var headTurn = Math.sin(t * 4.1) * 2.2;
-    sc.headL.setAttribute("transform", "translate(-6,-34) rotate(" + headTurn.toFixed(2) + " -14 100)"); sc.headR.setAttribute("transform", "translate(-6,-34) rotate(" + headTurn.toFixed(2) + " -14 100)");
+    /* başlar ve boyunlar: bağımsız bakınma, kanatla uyumlu hafif salınım */
+    [[sc.hL, 1, 0], [sc.hR, 1, 2.1]].forEach(function (h, i) {
+      var neck = 7 * Math.sin(time * 1.05 + h[2]) + 4 * Math.sin(ph * .5 + h[2]) + 3 * sn * amp;
+      var nod = 6 * Math.sin(time * 1.6 + h[2] * 1.7) - 4 * cs * amp;
+      h[0].neck.setAttribute("transform", "translate(-6,-34) rotate(" + neck.toFixed(2) + " -10 150)");
+      h[0].head.setAttribute("transform", "rotate(" + nod.toFixed(2) + " -40 66)");
+    });
+    sc.tail.setAttribute("transform", "rotate(" + (3 * Math.sin(ph * .5)).toFixed(2) + " 0 200)");
     sc.glowSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
     sc.glowSvg.style.transform = "translate3d(" + (xx * K * .6) + "px,0,0) scale(" + (.75 + t * 1.0).toFixed(3) + ")";
     sc.ringSvg.style.transformOrigin = px(800) + "px " + py(450) + "px";
@@ -578,8 +588,9 @@
   };
 
 
+
   /* 4d — YAPAY ZEKÂ: sohbet + dönen sinir küresi + yetenekler */
-  var AI = addScene("ai", "YAPAY ZEKÂ", 0.83, 0.94, function (sc, el) {
+  var AI = addScene("ai", "YAPAY ZEKÂ", 0.83, 1.0, function (sc, el) {
     H("hs-bg grid-bg", "", el);
     var stage = H("ai-stage", "", el);
     sc.chat = H("ai-chat", '<div class="chat-head"><i></i><b>Yörükhan AI</b><span>çevrimiçi</span></div>' +
@@ -603,7 +614,7 @@
   var AI_USER = "Niksar için canlı turnuva sitesi yap.", AI_BOT = "Anlaşıldı. Planlıyorum, tasarlıyorum, kodluyorum…";
   AI.update = function (t, time) {
     var sc = AI, cv = sc.cv, ctx = sc.ctx, dpr = Math.min(2, window.devicePixelRatio || 1);
-    var S0 = Math.round(Math.min(520, VH * .5, VW * .4));
+    var S0 = Math.round(Math.min(560, VH * .6, VW * .4));
     if (sc.size !== S0) { sc.size = S0; cv.style.width = cv.style.height = S0 + "px"; cv.width = cv.height = Math.round(S0 * dpr); }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, S0, S0);
     var c = S0 / 2, R = S0 * .34, ay = time * .35 + t * 7, ax = .45, ca = Math.cos(ay), sa = Math.sin(ay), cx_ = Math.cos(ax), sx_ = Math.sin(ax);
@@ -652,24 +663,6 @@
     sc.chat.style.transform = "translateY(" + ((1 - smooth(0, .12, t)) * 40) + "px)";
   };
 
-  /* =========================================================
-     5) FİNAL
-     ========================================================= */
-  var FINAL = addScene("final", "ANADOLU'DAN EVRENE", 0.925, 1.001, function (sc, el) {
-    H("hs-bg grid-bg", "", el);
-    sc.box = H("final-box", '<small>YÖRÜKHAN TECH</small><h2><span>Anadolu\'dan</span> <span class="grad-text">Evrene.</span></h2><p>Yapay zekâ destekli dijital deneyimler.</p><em>Aşağı kaydır ve çalışmalarımızı keşfet</em>', el);
-    sc.words = Array.prototype.slice.call(sc.box.querySelectorAll("h2 span"));
-  });
-  FINAL.update = function (t) {
-    FINAL.words.forEach(function (w, i) {
-      var k = smooth(.1 + i * .2, .4 + i * .2, t);
-      w.style.opacity = k; w.style.transform = "translateY(" + ((1 - k) * 50) + "px) scale(" + (.9 + .1 * k) + ")";
-    });
-    FINAL.box.style.opacity = smooth(0, .1, t);
-    FINAL.box.querySelector("p").style.opacity = smooth(.5, .75, t);
-    FINAL.box.querySelector("em").style.opacity = smooth(.7, .95, t);
-  };
-
   /* ---------- rail ve HUD ---------- */
   var dots = scenes.map(function () { var i = document.createElement("i"); rail.appendChild(i); return i; });
   var hudB = hud.querySelector("b"), hudS = hud.querySelector("span");
@@ -680,7 +673,7 @@
     var active = -1, bestOp = 0;
     scenes.forEach(function (sc, i) {
       var op = smooth(sc.a, sc.a + FADE, p) * (1 - smooth(sc.b - FADE, sc.b, p));
-      if (sc.id === "final") op = smooth(sc.a, sc.a + FADE, p);
+      if (sc.id === "ai") op = smooth(sc.a, sc.a + FADE, p);
       var show = op > .002;
       if (show !== sc.on) { sc.on = show; sc.el.style.display = show ? "block" : "none"; }
       if (!show) return;
